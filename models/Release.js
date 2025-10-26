@@ -4,7 +4,7 @@ const releaseSchema = new mongoose.Schema({
 	brand: {
 		type: String,
 		required: true,
-		enum: ["Azure", "Monsini", "Risky"],
+		enum: ["Azure", "Monsini", "Risky" , "other"],
 	},
 	year: {
 		type: Number,

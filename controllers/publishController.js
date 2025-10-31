@@ -2,56 +2,6 @@ const mongoose = require("mongoose");
 const Release = require("../models/Release");
 const { successResponse, errorResponse } = require("../utils/responseUtils");
 
-// const publishVersion = async (req, res) => {
-// 	try {
-// 		const { brand, year, versionName  } = req.body;
-
-// 		console.log("Publish request:", { brand, year, versionName });
-// 		if (!brand || !year || !versionName) {
-// 			return errorResponse(
-// 				res,
-// 				400,
-// 				"Brand, year, and versionName are required"
-// 			);
-// 		}
-
-// 		// Find the release to publish
-// 		const releaseToPublish = await Release.findOne({
-// 			brand,
-// 			year: Number(year),
-// 			versionName,
-// 		});
-
-// 		if (!releaseToPublish) {
-// 			return errorResponse(res, 404, "Release not found");
-// 		}
-
-// 		// Unpublish all releases for this brand
-// 		// await Release.updateMany(
-// 		// 	{ brand },
-// 		// 	{ $set: { isPublished: false, updatedAt: new Date() } }
-// 		// );
-
-// 		// Publish the selected release
-// 		releaseToPublish.isPublished = true;
-// 		releaseToPublish.updatedAt = new Date();
-// 		await releaseToPublish.save();
-
-// 		return successResponse(
-// 			res,
-// 			releaseToPublish,
-// 			"Version published successfully"
-// 		);
-// 	} catch (error) {
-// 		console.error("Publish error:", error);
-// 		return errorResponse(res, 500, "Failed to publish version", error.message);
-// 	}
-// };
-/**
- *
- * Get currently published version for a brand
- */
-
 const publishVersion = async (req, res) => {
 	try {
 		const { brand, year, versionName } = req.body;

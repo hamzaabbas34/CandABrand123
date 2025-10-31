@@ -1,0 +1,1510 @@
+// // // const XLSX = require("xlsx");
+
+// // // /**
+// // //  * Parse Excel file buffer to JSON array
+// // //  * @param {Buffer} buffer - Excel file buffer
+// // //  * @returns {Array} - Array of row objects
+// // //  */
+// // // const parseExcel = (buffer) => {
+// // // 	try {
+// // // 		const workbook = XLSX.read(buffer, { type: "buffer" });
+// // // 		const sheetName = workbook.SheetNames[0];
+// // // 		const sheet = workbook.Sheets[sheetName];
+// // // 		const data = XLSX.utils.sheet_to_json(sheet);
+// // // 		return data;
+// // // 	} catch (error) {
+// // // 		throw new Error(`Failed to parse Excel file: ${error.message}`);
+// // // 	}
+// // // };
+
+// // // // Helper function to get column value with flexible naming
+// // // const getColumnValue = (row, possibleColumnNames) => {
+// // // 	if (!row || typeof row !== "object") return undefined;
+
+// // // 	// First, try exact matches
+// // // 	for (const colName of possibleColumnNames) {
+// // // 		if (
+// // // 			row[colName] !== undefined &&
+// // // 			row[colName] !== null &&
+// // // 			row[colName] !== ""
+// // // 		) {
+// // // 			return row[colName];
+// // // 		}
+// // // 	}
+
+// // // 	// Then try case-insensitive and space-trimmed matches
+// // // 	const normalizedRow = {};
+// // // 	Object.keys(row).forEach((key) => {
+// // // 		normalizedRow[key.trim().toLowerCase()] = row[key];
+// // // 	});
+
+// // // 	for (const colName of possibleColumnNames) {
+// // // 		const normalizedColName = colName.trim().toLowerCase();
+// // // 		if (
+// // // 			normalizedRow[normalizedColName] !== undefined &&
+// // // 			normalizedRow[normalizedColName] !== null &&
+// // // 			normalizedRow[normalizedColName] !== ""
+// // // 		) {
+// // // 			return normalizedRow[normalizedColName];
+// // // 		}
+// // // 	}
+
+// // // 	return undefined;
+// // // };
+
+// // // /**
+// // //  * Extract colors from multiple color columns (Color 1, Color 2, Color 3, etc.)
+// // //  * @param {Object} row - Excel row
+// // //  * @returns {Array} - Array of color strings
+// // //  */
+// // // const extractColors = (row) => {
+// // // 	const colors = [];
+// // // 	if (!row || typeof row !== "object") return colors;
+
+// // // 	// Look for multiple color columns (Color 1, Color 2, Color 3, etc.)
+// // // 	const columns = Object.keys(row);
+
+// // // 	columns.forEach((col) => {
+// // // 		const normalizedCol = col.trim().toLowerCase();
+
+// // // 		// Match color column patterns like "Color 1", "Color 2", etc.
+// // // 		if (
+// // // 			/^color\s*\d*$/i.test(normalizedCol) ||
+// // // 			/^colour\s*\d*$/i.test(normalizedCol)
+// // // 		) {
+// // // 			const colorValue = row[col];
+// // // 			if (colorValue && String(colorValue).trim() !== "") {
+// // // 				colors.push(String(colorValue).trim().toUpperCase());
+// // // 			}
+// // // 		}
+// // // 	});
+
+// // // 	return colors;
+// // // };
+
+// // // /**
+// // //  * Parse price value from various formats including price ranges
+// // //  * @param {*} priceValue - Raw price value
+// // //  * @returns {Number} - Parsed price number (takes first number from ranges)
+// // //  */
+// // // const parsePrice = (priceValue) => {
+// // // 	if (!priceValue && priceValue !== 0) {
+// // // 		return null;
+// // // 	}
+
+// // // 	const priceStr = String(priceValue).trim();
+// // // 	console.log(`Parsing price: "${priceStr}"`);
+
+// // // 	// Handle price ranges like "$245--$255" or "$245-$255" or "245-255"
+// // // 	if (priceStr.includes("--") || priceStr.includes("-")) {
+// // // 		// Split by dash and take the first part
+// // // 		const priceParts = priceStr.split(/--|-/);
+// // // 		if (priceParts.length > 0) {
+// // // 			const firstPrice = priceParts[0].trim();
+// // // 			console.log(`Price range detected, using first part: "${firstPrice}"`);
+// // // 			return parseSinglePrice(firstPrice);
+// // // 		}
+// // // 	}
+
+// // // 	return parseSinglePrice(priceStr);
+// // // };
+
+// // // /**
+// // //  * Parse single price value (without ranges)
+// // //  * @param {String} priceStr - Single price string
+// // //  * @returns {Number} - Parsed price number
+// // //  */
+// // // const parseSinglePrice = (priceStr) => {
+// // // 	let cleanPrice = priceStr
+// // // 		// Remove currency codes (CAD, USD, EUR, etc.)
+// // // 		.replace(/^(CAD|USD|EUR|GBP|JPY|AUD|CHF|CNY|INR|SGD)\s*/gi, "")
+// // // 		// Remove currency symbols ($, €, £, etc.)
+// // // 		.replace(/[$,€£¥₹₩₺₽]/g, "")
+// // // 		// Remove commas (thousands separators)
+// // // 		.replace(/,/g, "")
+// // // 		// Remove ALL spaces (including multiple spaces)
+// // // 		.replace(/\s+/g, "")
+// // // 		// Trim
+// // // 		.trim();
+
+// // // 	// Convert to number
+// // // 	const priceNumber = Number(cleanPrice);
+
+// // // 	console.log(`Cleaned price: "${cleanPrice}" -> ${priceNumber}`);
+
+// // // 	return isNaN(priceNumber) ? null : priceNumber;
+// // // };
+
+// // // /**
+// // //  * Check if a row is empty (all values are empty/null/undefined)
+// // //  * @param {Object} row - Excel row
+// // //  * @returns {Boolean} - True if row is empty
+// // //  */
+// // // const isEmptyRow = (row) => {
+// // // 	if (!row || typeof row !== "object") return true;
+
+// // // 	const values = Object.values(row);
+// // // 	if (values.length === 0) return true;
+
+// // // 	return values.every(
+// // // 		(value) =>
+// // // 			value === undefined ||
+// // // 			value === null ||
+// // // 			value === "" ||
+// // // 			String(value).trim() === ""
+// // // 	);
+// // // };
+
+// // // /**
+// // //  * Check if a row has valid product data (has style and price)
+// // //  * @param {Object} row - Excel row
+// // //  * @returns {Boolean} - True if row has product data
+// // //  */
+// // // const isValidProductRow = (row) => {
+// // // 	if (isEmptyRow(row)) return false;
+
+// // // 	// Check if row has at least style and price
+// // // 	const style = getColumnValue(row, [
+// // // 		"Style",
+// // // 		"style",
+// // // 		"STYLE",
+// // // 		"Style #",
+// // // 		"Style#",
+// // // 	]);
+// // // 	const price = getColumnValue(row, [
+// // // 		"Price",
+// // // 		"price",
+// // // 		"PRICE",
+// // // 		"Price ",
+// // // 		"CA Wholesale Price",
+// // // 		"CA wholesale price",
+// // // 		"ca wholesale price",
+// // // 		" Price ",
+// // // 	]);
+
+// // // 	const hasStyle = style && String(style).trim() !== "";
+// // // 	const hasPrice = price && String(price).trim() !== "";
+
+// // // 	// Also check if it's one of those text rows (like "PLUS SIZE 18 AND UP IS 60$")
+// // // 	const hasTextContent = Object.values(row).some(
+// // // 		(value) =>
+// // // 			String(value).includes("PLUS SIZE") ||
+// // // 			String(value).includes("RUSH SERVICE")
+// // // 	);
+
+// // // 	return hasStyle && hasPrice && !hasTextContent;
+// // // };
+
+// // // /**
+// // //  * Validate Excel structure and data
+// // //  * @param {Array} data - Parsed Excel data
+// // //  * @param {String} expectedBrand - Expected brand name
+// // //  * @returns {Object} - Validation result
+// // //  */
+// // // const validateExcelStructure = (data, expectedBrand) => {
+// // // 	const errors = [];
+// // // 	const warnings = [];
+// // // 	console.log("Validating Excel structure...", data, expectedBrand);
+
+// // // 	if (!data || data.length === 0) {
+// // // 		return {
+// // // 			isValid: false,
+// // // 			errors: ["Excel file is empty"],
+// // // 			warnings: [],
+// // // 		};
+// // // 	}
+
+// // // 	// Filter out empty rows and non-product rows first
+// // // 	const filteredData = data.filter((row) => isValidProductRow(row));
+
+// // // 	console.log("=== FILTERED DATA (VALID ROWS) ===");
+// // // 	console.log(
+// // // 		`Original rows: ${data.length}, Filtered rows: ${filteredData.length}`
+// // // 	);
+// // // 	filteredData.forEach((row, index) => {
+// // // 		console.log(`✅ Valid Row ${index + 1}:`, row);
+// // // 	});
+
+// // // 	if (filteredData.length === 0) {
+// // // 		return {
+// // // 			isValid: false,
+// // // 			errors: ["Excel file contains no valid product rows"],
+// // // 			warnings: [],
+// // // 		};
+// // // 	}
+
+// // // 	const firstRow = filteredData[0];
+// // // 	const columns = Object.keys(firstRow);
+// // // 	console.log("Columns found:", columns);
+
+// // // 	// Normalize column names for case-insensitive matching
+// // // 	const normalizedColumns = columns.map((col) => col.trim().toLowerCase());
+
+// // // 	// Required columns - with flexible naming (including spaces)
+// // // 	const requiredColumns = [
+// // // 		{ name: "Style", patterns: ["style", "style #", "style#"] },
+// // // 		{ name: "Price", patterns: ["price", "ca wholesale price"] },
+// // // 		{ name: "Size Range", patterns: ["size range", "sizerange", "size"] },
+// // // 	];
+
+// // // 	// Check for brand column
+// // // 	const hasBrand = normalizedColumns.some((col) => col === "brand");
+
+// // // 	// Brand logic
+// // // 	if (!hasBrand) {
+// // // 		warnings.push("No Brand column found. Will use default brand value.");
+// // // 	}
+
+// // // 	// Check required columns
+// // // 	requiredColumns.forEach(({ name, patterns }) => {
+// // // 		const found = patterns.some((pattern) =>
+// // // 			normalizedColumns.includes(pattern.toLowerCase())
+// // // 		);
+// // // 		if (!found) {
+// // // 			errors.push(`Missing required column: ${name}`);
+// // // 		}
+// // // 	});
+
+// // // 	// Check for at least one color column
+// // // 	const hasColorColumn = normalizedColumns.some(
+// // // 		(col) => /^color\s*\d*$/i.test(col) || /^colour\s*\d*$/i.test(col)
+// // // 	);
+
+// // // 	if (!hasColorColumn) {
+// // // 		errors.push(
+// // // 			'No color columns found (looking for "Color 1", "Color 2", etc.)'
+// // // 		);
+// // // 	}
+
+// // // 	// Validate each row (using filtered data)
+// // // 	const duplicateStyles = [];
+// // // 	const styleSet = new Set();
+// // // 	const invalidRowsList = [];
+// // // 	const rowDetails = [];
+
+// // // 	filteredData.forEach((row, index) => {
+// // // 		const originalIndex = data.indexOf(row); // Get original index for row number
+// // // 		const rowNumber = originalIndex + 2; // Excel row number (1-indexed + header)
+// // // 		const rowErrors = [];
+
+// // // 		// Get style with flexible column names - ALLOW LETTERS LIKE -L, -A, etc.
+// // // 		const style = getColumnValue(row, [
+// // // 			"Style",
+// // // 			"style",
+// // // 			"STYLE",
+// // // 			"Style #",
+// // // 			"Style#",
+// // // 		]);
+// // // 		if (!style || String(style).trim() === "") {
+// // // 			rowErrors.push(`Missing Style`);
+// // // 		} else {
+// // // 			const styleStr = String(style).trim();
+// // // 			// Allow styles with letters like A9033-L, RS01-IV, etc.
+// // // 			if (styleSet.has(styleStr)) {
+// // // 				duplicateStyles.push({ style: styleStr, row: rowNumber });
+// // // 			}
+// // // 			styleSet.add(styleStr);
+// // // 		}
+
+// // // 		// Get price with flexible column names - INCLUDING "CA Wholesale Price"
+// // // 		const price = getColumnValue(row, [
+// // // 			"Price",
+// // // 			"price",
+// // // 			"PRICE",
+// // // 			"Price ",
+// // // 			"CA Wholesale Price",
+// // // 			"CA wholesale price",
+// // // 			"ca wholesale price",
+// // // 			" Price ",
+// // // 		]);
+// // // 		console.log(
+// // // 			`Row ${rowNumber} - Style: ${style} - Raw price value:`,
+// // // 			`"${price}"`,
+// // // 			typeof price
+// // // 		);
+
+// // // 		if (!price && price !== 0) {
+// // // 			rowErrors.push(`Missing Price`);
+// // // 		} else {
+// // // 			const parsedPrice = parsePrice(price);
+// // // 			console.log(`Row ${rowNumber} - Parsed price:`, parsedPrice);
+
+// // // 			if (parsedPrice === null) {
+// // // 				rowErrors.push(`Invalid Price: "${price}" is not a valid number`);
+// // // 			} else if (parsedPrice <= 0) {
+// // // 				rowErrors.push(`Invalid Price: Must be greater than 0`);
+// // // 			}
+// // // 		}
+
+// // // 		// Get size range with flexible column names
+// // // 		const sizeRange = getColumnValue(row, [
+// // // 			"Size Range",
+// // // 			"Size range",
+// // // 			"size range",
+// // // 			"sizerange",
+// // // 			"size",
+// // // 			"SIZE RANGE",
+// // // 			"Size Range ",
+// // // 			"Size",
+// // // 		]);
+// // // 		if (!sizeRange || String(sizeRange).trim() === "") {
+// // // 			rowErrors.push(`Missing Size Range`);
+// // // 		}
+
+// // // 		// Check colors
+// // // 		const colors = extractColors(row);
+// // // 		if (colors.length === 0) {
+// // // 			rowErrors.push(`No colors found`);
+// // // 		}
+
+// // // 		// Collect row details for errors
+// // // 		if (rowErrors.length > 0) {
+// // // 			invalidRowsList.push({
+// // // 				row: rowNumber,
+// // // 				style: style || "N/A",
+// // // 				issues: rowErrors,
+// // // 			});
+// // // 			errors.push(
+// // // 				`Row ${rowNumber} (Style: ${style || "N/A"}): ${rowErrors.join(", ")}`
+// // // 			);
+// // // 		} else {
+// // // 			rowDetails.push({
+// // // 				row: rowNumber,
+// // // 				style: String(style).trim(),
+// // // 				valid: true,
+// // // 			});
+// // // 		}
+// // // 	});
+
+// // // 	// Report duplicate styles with details
+// // // 	if (duplicateStyles.length > 0) {
+// // // 		const duplicateMap = {};
+// // // 		duplicateStyles.forEach(({ style, row }) => {
+// // // 			if (!duplicateMap[style]) {
+// // // 				duplicateMap[style] = [];
+// // // 			}
+// // // 			duplicateMap[style].push(row);
+// // // 		});
+
+// // // 		Object.keys(duplicateMap).forEach((style) => {
+// // // 			errors.push(
+// // // 				`Duplicate Style "${style}" found in rows: ${duplicateMap[style].join(
+// // // 					", "
+// // // 				)}`
+// // // 			);
+// // // 		});
+// // // 	}
+
+// // // 	return {
+// // // 		isValid: errors.length === 0,
+// // // 		errors,
+// // // 		warnings,
+// // // 		invalidRows: invalidRowsList,
+// // // 		totalRows: filteredData.length,
+// // // 		validRows: rowDetails.length,
+// // // 		hasBrand,
+// // // 		filteredData, // Return filtered data for transformation
+// // // 	};
+// // // };
+
+// // // // Function to determine brand value for a row
+// // // const getBrandValue = (row, hasBrand, expectedBrand) => {
+// // // 	if (hasBrand) {
+// // // 		const brandValue = getColumnValue(row, [
+// // // 			"Brand",
+// // // 			"brand",
+// // // 			"BRAND",
+// // // 			"Brand ",
+// // // 		]);
+// // // 		return brandValue || expectedBrand || "main";
+// // // 	}
+// // // 	return expectedBrand || "main";
+// // // };
+
+// // // /**
+// // //  * Transform Excel data to product format
+// // //  * @param {Array} data - Parsed Excel data
+// // //  * @param {String} brand - Brand name
+// // //  * @param {Number} year - Year
+// // //  * @param {String} versionName - Version name
+// // //  * @param {Object} validationResult - Validation result from validateExcelStructure
+// // //  * @returns {Array} - Array of product objects
+// // //  */
+// // // const transformExcelToProducts = (
+// // // 	data,
+// // // 	brand,
+// // // 	year,
+// // // 	versionName,
+// // // 	validationResult = {}
+// // // ) => {
+// // // 	console.log(
+// // // 		"Transforming Excel data to products...",
+// // // 		data,
+// // // 		brand,
+// // // 		year,
+// // // 		versionName,
+// // // 		validationResult
+// // // 	);
+
+// // // 	// Provide default values if validationResult is undefined or missing properties
+// // // 	const { hasBrand = false, filteredData = null } = validationResult || {};
+
+// // // 	// Use filtered data from validation if available, otherwise filter the data
+// // // 	let dataToTransform;
+// // // 	if (filteredData) {
+// // // 		dataToTransform = filteredData;
+// // // 	} else {
+// // // 		dataToTransform = data.filter((row) => isValidProductRow(row));
+// // // 	}
+
+// // // 	console.log("=== DATA TO TRANSFORM ===");
+// // // 	console.log(`Transforming ${dataToTransform.length} valid rows`);
+// // // 	dataToTransform.forEach((row, index) => {
+// // // 		console.log(`🔄 Transforming Row ${index + 1}:`, row);
+// // // 	});
+
+// // // 	return dataToTransform.map((row) => {
+// // // 		// Get price with flexible column names and parse it - INCLUDING "CA Wholesale Price"
+// // // 		const priceValue = getColumnValue(row, [
+// // // 			"Price",
+// // // 			"price",
+// // // 			"PRICE",
+// // // 			"Price ",
+// // // 			"CA Wholesale Price",
+// // // 			"CA wholesale price",
+// // // 			"ca wholesale price",
+// // // 			" Price ",
+// // // 		]);
+// // // 		const priceNumber = parsePrice(priceValue);
+
+// // // 		// Get brand value
+// // // 		const brandValue = getBrandValue(row, hasBrand, brand);
+
+// // // 		return {
+// // // 			brand: brandValue,
+// // // 			year: Number(year),
+// // // 			versionName,
+// // // 			style: String(
+// // // 				getColumnValue(row, ["Style", "style", "STYLE", "Style #", "Style#"])
+// // // 			).trim(),
+// // // 			division: "main", // Default division
+// // // 			price: priceNumber,
+// // // 			colors: extractColors(row),
+// // // 			size: String(
+// // // 				getColumnValue(row, [
+// // // 					"Size Range",
+// // // 					"Size range",
+// // // 					"size range",
+// // // 					"sizerange",
+// // // 					"Size",
+// // // 					"SIZE RANGE",
+// // // 					"SIZE",
+// // // 					"Size Range ",
+// // // 				]) || ""
+// // // 			).trim(),
+// // // 			images: [],
+// // // 		};
+// // // 	});
+// // // };
+
+// // // module.exports = {
+// // // 	parseExcel,
+// // // 	validateExcelStructure,
+// // // 	transformExcelToProducts,
+// // // 	getColumnValue,
+// // // 	extractColors,
+// // // 	getBrandValue,
+// // // 	parsePrice,
+// // // 	parseSinglePrice,
+// // // 	isEmptyRow,
+// // // 	isValidProductRow,
+// // // };
+
+// // const XLSX = require("xlsx");
+
+// // /**
+// //  * Parse Excel file buffer to JSON array
+// //  * @param {Buffer} buffer - Excel file buffer
+// //  * @returns {Array} - Array of row objects
+// //  */
+// // const parseExcel = (buffer) => {
+// // 	try {
+// // 		const workbook = XLSX.read(buffer, { type: "buffer" });
+// // 		const sheetName = workbook.SheetNames[0];
+// // 		const sheet = workbook.Sheets[sheetName];
+// // 		const data = XLSX.utils.sheet_to_json(sheet);
+// // 		return data;
+// // 	} catch (error) {
+// // 		throw new Error(`Failed to parse Excel file: ${error.message}`);
+// // 	}
+// // };
+
+// // // Helper function to get column value with flexible naming
+// // const getColumnValue = (row, possibleColumnNames) => {
+// // 	if (!row || typeof row !== "object") return undefined;
+
+// // 	// First, try exact matches
+// // 	for (const colName of possibleColumnNames) {
+// // 		if (
+// // 			row[colName] !== undefined &&
+// // 			row[colName] !== null &&
+// // 			row[colName] !== ""
+// // 		) {
+// // 			return row[colName];
+// // 		}
+// // 	}
+
+// // 	// Then try case-insensitive and space-trimmed matches
+// // 	const normalizedRow = {};
+// // 	Object.keys(row).forEach((key) => {
+// // 		normalizedRow[key.trim().toLowerCase()] = row[key];
+// // 	});
+
+// // 	for (const colName of possibleColumnNames) {
+// // 		const normalizedColName = colName.trim().toLowerCase();
+// // 		if (
+// // 			normalizedRow[normalizedColName] !== undefined &&
+// // 			normalizedRow[normalizedColName] !== null &&
+// // 			normalizedRow[normalizedColName] !== ""
+// // 		) {
+// // 			return normalizedRow[normalizedColName];
+// // 		}
+// // 	}
+
+// // 	return undefined;
+// // };
+
+// // /**
+// //  * Extract colors from multiple color columns (Color 1, Color 2, Color 3, etc.)
+// //  * @param {Object} row - Excel row
+// //  * @returns {Array} - Array of color strings
+// //  */
+// // const extractColors = (row) => {
+// // 	const colors = [];
+// // 	if (!row || typeof row !== "object") return colors;
+
+// // 	// Look for multiple color columns (Color 1, Color 2, Color 3, etc.)
+// // 	const columns = Object.keys(row);
+
+// // 	columns.forEach((col) => {
+// // 		const normalizedCol = col.trim().toLowerCase();
+
+// // 		// Match color column patterns like "Color 1", "Color 2", etc.
+// // 		if (
+// // 			/^color\s*\d*$/i.test(normalizedCol) ||
+// // 			/^colour\s*\d*$/i.test(normalizedCol)
+// // 		) {
+// // 			const colorValue = row[col];
+// // 			if (colorValue && String(colorValue).trim() !== "") {
+// // 				colors.push(String(colorValue).trim().toUpperCase());
+// // 			}
+// // 		}
+// // 	});
+
+// // 	return colors;
+// // };
+
+// // /**
+// //  * Parse price value from various formats including price ranges
+// //  * @param {*} priceValue - Raw price value
+// //  * @returns {Number} - Parsed price number (takes first number from ranges)
+// //  */
+// // const parsePrice = (priceValue) => {
+// // 	if (!priceValue && priceValue !== 0) {
+// // 		return null;
+// // 	}
+
+// // 	const priceStr = String(priceValue).trim();
+// // 	console.log(`Parsing price: "${priceStr}"`);
+
+// // 	// Handle price ranges like "$245--$255" or "$245-$255" or "245-255"
+// // 	if (priceStr.includes("--") || priceStr.includes("-")) {
+// // 		// Split by dash and take the first part
+// // 		const priceParts = priceStr.split(/--|-/);
+// // 		if (priceParts.length > 0) {
+// // 			const firstPrice = priceParts[0].trim();
+// // 			console.log(`Price range detected, using first part: "${firstPrice}"`);
+// // 			return parseSinglePrice(firstPrice);
+// // 		}
+// // 	}
+
+// // 	return parseSinglePrice(priceStr);
+// // };
+
+// // /**
+// //  * Parse single price value (without ranges)
+// //  * @param {String} priceStr - Single price string
+// //  * @returns {Number} - Parsed price number
+// //  */
+// // const parseSinglePrice = (priceStr) => {
+// // 	let cleanPrice = priceStr
+// // 		// Remove currency codes (CAD, USD, EUR, etc.)
+// // 		.replace(/^(CAD|USD|EUR|GBP|JPY|AUD|CHF|CNY|INR|SGD)\s*/gi, "")
+// // 		// Remove currency symbols ($, €, £, etc.)
+// // 		.replace(/[$,€£¥₹₩₺₽]/g, "")
+// // 		// Remove commas (thousands separators)
+// // 		.replace(/,/g, "")
+// // 		// Remove ALL spaces (including multiple spaces)
+// // 		.replace(/\s+/g, "")
+// // 		// Trim
+// // 		.trim();
+
+// // 	// Convert to number
+// // 	const priceNumber = Number(cleanPrice);
+
+// // 	console.log(`Cleaned price: "${cleanPrice}" -> ${priceNumber}`);
+
+// // 	return isNaN(priceNumber) ? null : priceNumber;
+// // };
+
+// // /**
+// //  * Check if a row is empty (all values are empty/null/undefined)
+// //  * @param {Object} row - Excel row
+// //  * @returns {Boolean} - True if row is empty
+// //  */
+// // const isEmptyRow = (row) => {
+// // 	if (!row || typeof row !== "object") return true;
+
+// // 	const values = Object.values(row);
+// // 	if (values.length === 0) return true;
+
+// // 	return values.every(
+// // 		(value) =>
+// // 			value === undefined ||
+// // 			value === null ||
+// // 			value === "" ||
+// // 			String(value).trim() === ""
+// // 	);
+// // };
+
+// // /**
+// //  * Check if a row has valid product data (has style and price)
+// //  * @param {Object} row - Excel row
+// //  * @returns {Boolean} - True if row has product data
+// //  */
+// // const isValidProductRow = (row) => {
+// // 	if (isEmptyRow(row)) return false;
+
+// // 	// Check if row has at least style and price
+// // 	const style = getColumnValue(row, [
+// // 		"Style",
+// // 		"style",
+// // 		"STYLE",
+// // 		"Style #",
+// // 		"Style#",
+// // 	]);
+// // 	const price = getColumnValue(row, [
+// // 		"Price",
+// // 		"price",
+// // 		"PRICE",
+// // 		"Price ",
+// // 		"CA Wholesale Price",
+// // 		"CA wholesale price",
+// // 		"ca wholesale price",
+// // 		" Price ",
+// // 	]);
+
+// // 	const hasStyle = style && String(style).trim() !== "";
+// // 	const hasPrice = price && String(price).trim() !== "";
+
+// // 	// Also check if it's one of those text rows (like "PLUS SIZE 18 AND UP IS 60$")
+// // 	const hasTextContent = Object.values(row).some(
+// // 		(value) =>
+// // 			String(value).includes("PLUS SIZE") ||
+// // 			String(value).includes("RUSH SERVICE")
+// // 	);
+
+// // 	return hasStyle && hasPrice && !hasTextContent;
+// // };
+
+// // /**
+// //  * Validate Excel structure and data
+// //  * @param {Array} data - Parsed Excel data
+// //  * @param {String} expectedBrand - Expected brand name
+// //  * @returns {Object} - Validation result
+// //  */
+// // const validateExcelStructure = (data, expectedBrand) => {
+// // 	const errors = [];
+// // 	const warnings = [];
+// // 	console.log("Validating Excel structure...", data, expectedBrand);
+
+// // 	if (!data || data.length === 0) {
+// // 		return {
+// // 			isValid: false,
+// // 			errors: ["Excel file is empty"],
+// // 			warnings: [],
+// // 		};
+// // 	}
+
+// // 	// Filter out empty rows and non-product rows first
+// // 	const filteredData = data.filter((row) => isValidProductRow(row));
+
+// // 	console.log("=== FILTERED DATA (VALID ROWS) ===");
+// // 	console.log(
+// // 		`Original rows: ${data.length}, Filtered rows: ${filteredData.length}`
+// // 	);
+// // 	filteredData.forEach((row, index) => {
+// // 		console.log(`✅ Valid Row ${index + 1}:`, row);
+// // 	});
+
+// // 	if (filteredData.length === 0) {
+// // 		return {
+// // 			isValid: false,
+// // 			errors: ["Excel file contains no valid product rows"],
+// // 			warnings: [],
+// // 		};
+// // 	}
+
+// // 	const firstRow = filteredData[0];
+// // 	const columns = Object.keys(firstRow);
+// // 	console.log("Columns found:", columns);
+
+// // 	// Normalize column names for case-insensitive matching
+// // 	const normalizedColumns = columns.map((col) => col.trim().toLowerCase());
+
+// // 	// Required columns - ONLY THESE 4 COLUMNS
+// // 	const requiredColumns = [
+// // 		{ name: "Style", patterns: ["style", "style #", "style#"] },
+// // 		{ name: "Price", patterns: ["price", "ca wholesale price"] },
+// // 		{ name: "Size Range", patterns: ["size range", "sizerange", "size"] },
+// // 	];
+
+// // 	// Check for at least one color column
+// // 	const hasColorColumn = normalizedColumns.some(
+// // 		(col) => /^color\s*\d*$/i.test(col) || /^colour\s*\d*$/i.test(col)
+// // 	);
+
+// // 	if (!hasColorColumn) {
+// // 		errors.push(
+// // 			'No color columns found (looking for "Color 1", "Color 2", etc.)'
+// // 		);
+// // 	}
+
+// // 	// Check required columns
+// // 	requiredColumns.forEach(({ name, patterns }) => {
+// // 		const found = patterns.some((pattern) =>
+// // 			normalizedColumns.includes(pattern.toLowerCase())
+// // 		);
+// // 		if (!found) {
+// // 			errors.push(`Missing required column: ${name}`);
+// // 		}
+// // 	});
+
+// // 	// Validate each row (using filtered data)
+// // 	const duplicateStyles = [];
+// // 	const styleSet = new Set();
+// // 	const invalidRowsList = [];
+// // 	const rowDetails = [];
+
+// // 	filteredData.forEach((row, index) => {
+// // 		const originalIndex = data.indexOf(row); // Get original index for row number
+// // 		const rowNumber = originalIndex + 2; // Excel row number (1-indexed + header)
+// // 		const rowErrors = [];
+
+// // 		// Get style with flexible column names
+// // 		const style = getColumnValue(row, [
+// // 			"Style",
+// // 			"style",
+// // 			"STYLE",
+// // 			"Style #",
+// // 			"Style#",
+// // 		]);
+// // 		if (!style || String(style).trim() === "") {
+// // 			rowErrors.push(`Missing Style`);
+// // 		} else {
+// // 			const styleStr = String(style).trim();
+// // 			if (styleSet.has(styleStr)) {
+// // 				duplicateStyles.push({ style: styleStr, row: rowNumber });
+// // 			}
+// // 			styleSet.add(styleStr);
+// // 		}
+
+// // 		// Get price with flexible column names
+// // 		const price = getColumnValue(row, [
+// // 			"Price",
+// // 			"price",
+// // 			"PRICE",
+// // 			"Price ",
+// // 			"CA Wholesale Price",
+// // 			"CA wholesale price",
+// // 			"ca wholesale price",
+// // 			" Price ",
+// // 		]);
+// // 		console.log(
+// // 			`Row ${rowNumber} - Style: ${style} - Raw price value:`,
+// // 			`"${price}"`,
+// // 			typeof price
+// // 		);
+
+// // 		if (!price && price !== 0) {
+// // 			rowErrors.push(`Missing Price`);
+// // 		} else {
+// // 			const parsedPrice = parsePrice(price);
+// // 			console.log(`Row ${rowNumber} - Parsed price:`, parsedPrice);
+
+// // 			if (parsedPrice === null) {
+// // 				rowErrors.push(`Invalid Price: "${price}" is not a valid number`);
+// // 			} else if (parsedPrice <= 0) {
+// // 				rowErrors.push(`Invalid Price: Must be greater than 0`);
+// // 			}
+// // 		}
+
+// // 		// Get size range with flexible column names
+// // 		const sizeRange = getColumnValue(row, [
+// // 			"Size Range",
+// // 			"Size range",
+// // 			"size range",
+// // 			"sizerange",
+// // 			"size",
+// // 			"SIZE RANGE",
+// // 			"Size Range ",
+// // 			"Size",
+// // 		]);
+// // 		if (!sizeRange || String(sizeRange).trim() === "") {
+// // 			rowErrors.push(`Missing Size Range`);
+// // 		}
+
+// // 		// Check colors
+// // 		const colors = extractColors(row);
+// // 		if (colors.length === 0) {
+// // 			rowErrors.push(`No colors found`);
+// // 		}
+
+// // 		// Collect row details for errors
+// // 		if (rowErrors.length > 0) {
+// // 			invalidRowsList.push({
+// // 				row: rowNumber,
+// // 				style: style || "N/A",
+// // 				issues: rowErrors,
+// // 			});
+// // 			errors.push(
+// // 				`Row ${rowNumber} (Style: ${style || "N/A"}): ${rowErrors.join(", ")}`
+// // 			);
+// // 		} else {
+// // 			rowDetails.push({
+// // 				row: rowNumber,
+// // 				style: String(style).trim(),
+// // 				valid: true,
+// // 			});
+// // 		}
+// // 	});
+
+// // 	// Report duplicate styles with details
+// // 	if (duplicateStyles.length > 0) {
+// // 		const duplicateMap = {};
+// // 		duplicateStyles.forEach(({ style, row }) => {
+// // 			if (!duplicateMap[style]) {
+// // 				duplicateMap[style] = [];
+// // 			}
+// // 			duplicateMap[style].push(row);
+// // 		});
+
+// // 		Object.keys(duplicateMap).forEach((style) => {
+// // 			errors.push(
+// // 				`Duplicate Style "${style}" found in rows: ${duplicateMap[style].join(
+// // 					", "
+// // 				)}`
+// // 			);
+// // 		});
+// // 	}
+
+// // 	return {
+// // 		isValid: errors.length === 0,
+// // 		errors,
+// // 		warnings,
+// // 		invalidRows: invalidRowsList,
+// // 		totalRows: filteredData.length,
+// // 		validRows: rowDetails.length,
+// // 		filteredData, // Return filtered data for transformation
+// // 	};
+// // };
+
+// // /**
+// //  * Transform Excel data to product format
+// //  * @param {Array} data - Parsed Excel data
+// //  * @param {String} brand - Brand name
+// //  * @param {Number} year - Year
+// //  * @param {String} versionName - Version name
+// //  * @param {String} category - Product category
+// //  * @param {Object} validationResult - Validation result from validateExcelStructure
+// //  * @returns {Array} - Array of product objects
+// //  */
+// // const transformExcelToProducts = (
+// // 	data,
+// // 	brand,
+// // 	year,
+// // 	versionName,
+// // 	category, // ADDED CATEGORY PARAMETER
+// // 	validationResult = {}
+// // ) => {
+// // 	console.log(
+// // 		"Transforming Excel data to products...",
+// // 		data,
+// // 		brand,
+// // 		year,
+// // 		versionName,
+// // 		category,
+// // 		validationResult
+// // 	);
+
+// // 	// Use filtered data from validation if available, otherwise filter the data
+// // 	const { filteredData = null } = validationResult || {};
+// // 	let dataToTransform;
+// // 	if (filteredData) {
+// // 		dataToTransform = filteredData;
+// // 	} else {
+// // 		dataToTransform = data.filter((row) => isValidProductRow(row));
+// // 	}
+
+// // 	console.log("=== DATA TO TRANSFORM ===");
+// // 	console.log(`Transforming ${dataToTransform.length} valid rows`);
+// // 	dataToTransform.forEach((row, index) => {
+// // 		console.log(`🔄 Transforming Row ${index + 1}:`, row);
+// // 	});
+
+// // 	return dataToTransform.map((row) => {
+// // 		// Get price with flexible column names and parse it
+// // 		const priceValue = getColumnValue(row, [
+// // 			"Price",
+// // 			"price",
+// // 			"PRICE",
+// // 			"Price ",
+// // 			"CA Wholesale Price",
+// // 			"CA wholesale price",
+// // 			"ca wholesale price",
+// // 			" Price ",
+// // 		]);
+// // 		const priceNumber = parsePrice(priceValue);
+
+// // 		return {
+// // 			brand: brand, // Use the provided brand
+// // 			year: Number(year),
+// // 			versionName,
+// // 			category: category, // ADD CATEGORY TO PRODUCT
+// // 			style: String(
+// // 				getColumnValue(row, ["Style", "style", "STYLE", "Style #", "Style#"])
+// // 			).trim(),
+// // 			price: priceNumber,
+// // 			colors: extractColors(row),
+// // 			size: String(
+// // 				getColumnValue(row, [
+// // 					"Size Range",
+// // 					"Size range",
+// // 					"size range",
+// // 					"sizerange",
+// // 					"Size",
+// // 					"SIZE RANGE",
+// // 					"SIZE",
+// // 					"Size Range ",
+// // 				]) || ""
+// // 			).trim(),
+// // 			images: [],
+// // 		};
+// // 	});
+// // };
+
+// // module.exports = {
+// // 	parseExcel,
+// // 	validateExcelStructure,
+// // 	transformExcelToProducts,
+// // 	getColumnValue,
+// // 	extractColors,
+// // 	parsePrice,
+// // 	parseSinglePrice,
+// // 	isEmptyRow,
+// // 	isValidProductRow,
+// // };
+// const XLSX = require("xlsx");
+
+// /**
+//  * Parse Excel file buffer to JSON array
+//  * @param {Buffer} buffer - Excel file buffer
+//  * @returns {Array} - Array of row objects
+//  */
+// const parseExcel = (buffer) => {
+// 	try {
+// 		const workbook = XLSX.read(buffer, { type: "buffer" });
+// 		const sheetName = workbook.SheetNames[0];
+// 		const sheet = workbook.Sheets[sheetName];
+// 		const data = XLSX.utils.sheet_to_json(sheet);
+// 		return data;
+// 	} catch (error) {
+// 		throw new Error(`Failed to parse Excel file: ${error.message}`);
+// 	}
+// };
+
+// // Helper function to get column value with flexible naming
+// const getColumnValue = (row, possibleColumnNames) => {
+// 	if (!row || typeof row !== "object") return undefined;
+
+// 	// First, try exact matches
+// 	for (const colName of possibleColumnNames) {
+// 		if (
+// 			row[colName] !== undefined &&
+// 			row[colName] !== null &&
+// 			row[colName] !== ""
+// 		) {
+// 			return row[colName];
+// 		}
+// 	}
+
+// 	// Then try case-insensitive and space-trimmed matches
+// 	const normalizedRow = {};
+// 	Object.keys(row).forEach((key) => {
+// 		normalizedRow[key.trim().toLowerCase()] = row[key];
+// 	});
+
+// 	for (const colName of possibleColumnNames) {
+// 		const normalizedColName = colName.trim().toLowerCase();
+// 		if (
+// 			normalizedRow[normalizedColName] !== undefined &&
+// 			normalizedRow[normalizedColName] !== null &&
+// 			normalizedRow[normalizedColName] !== ""
+// 		) {
+// 			return normalizedRow[normalizedColName];
+// 		}
+// 	}
+
+// 	return undefined;
+// };
+
+// /**
+//  * Extract colors from multiple color columns (Color 1, Color 2, Color 3, etc.)
+//  * @param {Object} row - Excel row
+//  * @returns {Array} - Array of color strings
+//  */
+// const extractColors = (row) => {
+// 	const colors = [];
+// 	if (!row || typeof row !== "object") return colors;
+
+// 	// Look for multiple color columns (Color 1, Color 2, Color 3, etc.)
+// 	const columns = Object.keys(row);
+
+// 	columns.forEach((col) => {
+// 		const normalizedCol = col.trim().toLowerCase();
+
+// 		// Match color column patterns like "Color 1", "Color 2", etc.
+// 		if (
+// 			/^color\s*\d*$/i.test(normalizedCol) ||
+// 			/^colour\s*\d*$/i.test(normalizedCol)
+// 		) {
+// 			const colorValue = row[col];
+// 			if (colorValue && String(colorValue).trim() !== "") {
+// 				colors.push(String(colorValue).trim().toUpperCase());
+// 			}
+// 		}
+// 	});
+
+// 	return colors;
+// };
+
+// /**
+//  * Parse price value from various formats including price ranges
+//  * @param {*} priceValue - Raw price value
+//  * @returns {Number} - Parsed price number (takes first number from ranges)
+//  */
+// const parsePrice = (priceValue) => {
+// 	if (!priceValue && priceValue !== 0) {
+// 		return null;
+// 	}
+
+// 	const priceStr = String(priceValue).trim();
+// 	console.log(`Parsing price: "${priceStr}"`);
+
+// 	// Handle price ranges like "$245--$255" or "$245-$255" or "245-255"
+// 	if (priceStr.includes("--") || priceStr.includes("-")) {
+// 		// Split by dash and take the first part
+// 		const priceParts = priceStr.split(/--|-/);
+// 		if (priceParts.length > 0) {
+// 			const firstPrice = priceParts[0].trim();
+// 			console.log(`Price range detected, using first part: "${firstPrice}"`);
+// 			return parseSinglePrice(firstPrice);
+// 		}
+// 	}
+
+// 	return parseSinglePrice(priceStr);
+// };
+
+// /**
+//  * Parse single price value (without ranges)
+//  * @param {String} priceStr - Single price string
+//  * @returns {Number} - Parsed price number
+//  */
+// const parseSinglePrice = (priceStr) => {
+// 	let cleanPrice = priceStr
+// 		// Remove currency codes (CAD, USD, EUR, etc.)
+// 		.replace(/^(CAD|USD|EUR|GBP|JPY|AUD|CHF|CNY|INR|SGD)\s*/gi, "")
+// 		// Remove currency symbols ($, €, £, etc.)
+// 		.replace(/[$,€£¥₹₩₺₽]/g, "")
+// 		// Remove commas (thousands separators)
+// 		.replace(/,/g, "")
+// 		// Remove ALL spaces (including multiple spaces)
+// 		.replace(/\s+/g, "")
+// 		// Trim
+// 		.trim();
+
+// 	// Convert to number
+// 	const priceNumber = Number(cleanPrice);
+
+// 	console.log(`Cleaned price: "${cleanPrice}" -> ${priceNumber}`);
+
+// 	return isNaN(priceNumber) ? null : priceNumber;
+// };
+
+// /**
+//  * Check if a row is empty (all values are empty/null/undefined)
+//  * @param {Object} row - Excel row
+//  * @returns {Boolean} - True if row is empty
+//  */
+// const isEmptyRow = (row) => {
+// 	if (!row || typeof row !== "object") return true;
+
+// 	const values = Object.values(row);
+// 	if (values.length === 0) return true;
+
+// 	return values.every(
+// 		(value) =>
+// 			value === undefined ||
+// 			value === null ||
+// 			value === "" ||
+// 			String(value).trim() === ""
+// 	);
+// };
+
+// /**
+//  * Check if a row has valid product data (has style and price)
+//  * @param {Object} row - Excel row
+//  * @returns {Boolean} - True if row has product data
+//  */
+// const isValidProductRow = (row) => {
+// 	if (isEmptyRow(row)) return false;
+
+// 	// Check if row has at least style and price
+// 	const style = getColumnValue(row, [
+// 		"Style",
+// 		"style",
+// 		"STYLE",
+// 		"Style #",
+// 		"Style#",
+// 	]);
+// 	const price = getColumnValue(row, [
+// 		"Price",
+// 		"price",
+// 		"PRICE",
+// 		"Price ",
+// 		"CA Wholesale Price",
+// 		"CA wholesale price",
+// 		"ca wholesale price",
+// 		" Price ",
+// 	]);
+
+// 	const hasStyle = style && String(style).trim() !== "";
+// 	const hasPrice = price && String(price).trim() !== "";
+
+// 	// Also check if it's one of those text rows (like "PLUS SIZE 18 AND UP IS 60$")
+// 	const hasTextContent = Object.values(row).some(
+// 		(value) =>
+// 			String(value).includes("PLUS SIZE") ||
+// 			String(value).includes("RUSH SERVICE")
+// 	);
+
+// 	return hasStyle && hasPrice && !hasTextContent;
+// };
+
+// /**
+//  * Validate Excel structure and data
+//  * @param {Array} data - Parsed Excel data
+//  * @param {String} expectedBrand - Expected brand name
+//  * @returns {Object} - Validation result
+//  */
+// const validateExcelStructure = (data, expectedBrand) => {
+// 	const errors = [];
+// 	const warnings = [];
+// 	console.log("Validating Excel structure...", data, expectedBrand);
+
+// 	if (!data || data.length === 0) {
+// 		return {
+// 			isValid: false,
+// 			errors: ["Excel file is empty"],
+// 			warnings: [],
+// 		};
+// 	}
+
+// 	// Filter out empty rows and non-product rows first
+// 	const filteredData = data.filter((row) => isValidProductRow(row));
+
+// 	console.log("=== FILTERED DATA (VALID ROWS) ===");
+// 	console.log(
+// 		`Original rows: ${data.length}, Filtered rows: ${filteredData.length}`
+// 	);
+// 	filteredData.forEach((row, index) => {
+// 		console.log(`✅ Valid Row ${index + 1}:`, row);
+// 	});
+
+// 	if (filteredData.length === 0) {
+// 		return {
+// 			isValid: false,
+// 			errors: ["Excel file contains no valid product rows"],
+// 			warnings: [],
+// 		};
+// 	}
+
+// 	const firstRow = filteredData[0];
+// 	const columns = Object.keys(firstRow);
+// 	console.log("Columns found:", columns);
+
+// 	// Normalize column names for case-insensitive matching
+// 	const normalizedColumns = columns.map((col) => col.trim().toLowerCase());
+
+// 	// Required columns - ONLY THESE 4 COLUMNS
+// 	const requiredColumns = [
+// 		{ name: "Style", patterns: ["style", "style #", "style#"] },
+// 		{ name: "Price", patterns: ["price", "ca wholesale price"] },
+// 		{ name: "Size Range", patterns: ["size range", "sizerange", "size"] },
+// 	];
+
+// 	// Check for at least one color column
+// 	const hasColorColumn = normalizedColumns.some(
+// 		(col) => /^color\s*\d*$/i.test(col) || /^colour\s*\d*$/i.test(col)
+// 	);
+
+// 	if (!hasColorColumn) {
+// 		errors.push(
+// 			'No color columns found (looking for "Color 1", "Color 2", etc.)'
+// 		);
+// 	}
+
+// 	// Check required columns
+// 	requiredColumns.forEach(({ name, patterns }) => {
+// 		const found = patterns.some((pattern) =>
+// 			normalizedColumns.includes(pattern.toLowerCase())
+// 		);
+// 		if (!found) {
+// 			errors.push(`Missing required column: ${name}`);
+// 		}
+// 	});
+
+// 	// Validate each row (using filtered data)
+// 	const duplicateStyles = [];
+// 	const styleSet = new Set();
+// 	const invalidRowsList = [];
+// 	const rowDetails = [];
+
+// 	filteredData.forEach((row, index) => {
+// 		const originalIndex = data.indexOf(row); // Get original index for row number
+// 		const rowNumber = originalIndex + 2; // Excel row number (1-indexed + header)
+// 		const rowErrors = [];
+
+// 		// Get style with flexible column names
+// 		const style = getColumnValue(row, [
+// 			"Style",
+// 			"style",
+// 			"STYLE",
+// 			"Style #",
+// 			"Style#",
+// 		]);
+// 		if (!style || String(style).trim() === "") {
+// 			rowErrors.push(`Missing Style`);
+// 		} else {
+// 			const styleStr = String(style).trim();
+// 			if (styleSet.has(styleStr)) {
+// 				duplicateStyles.push({ style: styleStr, row: rowNumber });
+// 			}
+// 			styleSet.add(styleStr);
+// 		}
+
+// 		// Get price with flexible column names
+// 		const price = getColumnValue(row, [
+// 			"Price",
+// 			"price",
+// 			"PRICE",
+// 			"Price ",
+// 			"CA Wholesale Price",
+// 			"CA wholesale price",
+// 			"ca wholesale price",
+// 			" Price ",
+// 		]);
+// 		console.log(
+// 			`Row ${rowNumber} - Style: ${style} - Raw price value:`,
+// 			`"${price}"`,
+// 			typeof price
+// 		);
+
+// 		if (!price && price !== 0) {
+// 			rowErrors.push(`Missing Price`);
+// 		} else {
+// 			const parsedPrice = parsePrice(price);
+// 			console.log(`Row ${rowNumber} - Parsed price:`, parsedPrice);
+
+// 			if (parsedPrice === null) {
+// 				rowErrors.push(`Invalid Price: "${price}" is not a valid number`);
+// 			} else if (parsedPrice <= 0) {
+// 				rowErrors.push(`Invalid Price: Must be greater than 0`);
+// 			}
+// 		}
+
+// 		// Get size range with flexible column names
+// 		const sizeRange = getColumnValue(row, [
+// 			"Size Range",
+// 			"Size range",
+// 			"size range",
+// 			"sizerange",
+// 			"size",
+// 			"SIZE RANGE",
+// 			"Size Range ",
+// 			"Size",
+// 		]);
+// 		if (!sizeRange || String(sizeRange).trim() === "") {
+// 			rowErrors.push(`Missing Size Range`);
+// 		}
+
+// 		// Check colors
+// 		const colors = extractColors(row);
+// 		if (colors.length === 0) {
+// 			rowErrors.push(`No colors found`);
+// 		}
+
+// 		// Collect row details for errors
+// 		if (rowErrors.length > 0) {
+// 			invalidRowsList.push({
+// 				row: rowNumber,
+// 				style: style || "N/A",
+// 				issues: rowErrors,
+// 			});
+// 			errors.push(
+// 				`Row ${rowNumber} (Style: ${style || "N/A"}): ${rowErrors.join(", ")}`
+// 			);
+// 		} else {
+// 			rowDetails.push({
+// 				row: rowNumber,
+// 				style: String(style).trim(),
+// 				valid: true,
+// 			});
+// 		}
+// 	});
+
+// 	// Report duplicate styles with details
+// 	if (duplicateStyles.length > 0) {
+// 		const duplicateMap = {};
+// 		duplicateStyles.forEach(({ style, row }) => {
+// 			if (!duplicateMap[style]) {
+// 				duplicateMap[style] = [];
+// 			}
+// 			duplicateMap[style].push(row);
+// 		});
+
+// 		Object.keys(duplicateMap).forEach((style) => {
+// 			errors.push(
+// 				`Duplicate Style "${style}" found in rows: ${duplicateMap[style].join(
+// 					", "
+// 				)}`
+// 			);
+// 		});
+// 	}
+
+// 	return {
+// 		isValid: errors.length === 0,
+// 		errors,
+// 		warnings,
+// 		invalidRows: invalidRowsList,
+// 		totalRows: filteredData.length,
+// 		validRows: rowDetails.length,
+// 		filteredData, // Return filtered data for transformation
+// 	};
+// };
+
+// /**
+//  * Transform Excel data to product format
+//  * @param {Array} data - Parsed Excel data
+//  * @param {String} brand - Brand name
+//  * @param {Number} year - Year
+//  * @param {String} versionName - Version name
+//  * @param {String} category - Product category
+//  * @param {Object} validationResult - Validation result from validateExcelStructure
+//  * @returns {Array} - Array of product objects
+//  */
+// const transformExcelToProducts = (
+// 	data,
+// 	brand,
+// 	year,
+// 	versionName,
+// 	category,
+// 	validationResult = {}
+// ) => {
+// 	console.log(
+// 		"Transforming Excel data to products...",
+// 		data,
+// 		brand,
+// 		year,
+// 		versionName,
+// 		category,
+// 		validationResult
+// 	);
+
+// 	// Use filtered data from validation if available, otherwise filter the data
+// 	const { filteredData = null } = validationResult || {};
+// 	let dataToTransform;
+// 	if (filteredData) {
+// 		dataToTransform = filteredData;
+// 	} else {
+// 		dataToTransform = data.filter((row) => isValidProductRow(row));
+// 	}
+
+// 	console.log("=== DATA TO TRANSFORM ===");
+// 	console.log(`Transforming ${dataToTransform.length} valid rows`);
+// 	dataToTransform.forEach((row, index) => {
+// 		console.log(`🔄 Transforming Row ${index + 1}:`, row);
+// 	});
+
+// 	return dataToTransform.map((row) => {
+// 		// Get price with flexible column names and parse it
+// 		const priceValue = getColumnValue(row, [
+// 			"Price",
+// 			"price",
+// 			"PRICE",
+// 			"Price ",
+// 			"CA Wholesale Price",
+// 			"CA wholesale price",
+// 			"ca wholesale price",
+// 			" Price ",
+// 		]);
+// 		const priceNumber = parsePrice(priceValue);
+
+// 		return {
+// 			brand: brand,
+// 			year: Number(year),
+// 			versionName,
+// 			category: category,
+// 			style: String(
+// 				getColumnValue(row, ["Style", "style", "STYLE", "Style #", "Style#"])
+// 			).trim(),
+// 			price: priceNumber,
+// 			colors: extractColors(row),
+// 			size: String(
+// 				getColumnValue(row, [
+// 					"Size Range",
+// 					"Size range",
+// 					"size range",
+// 					"sizerange",
+// 					"Size",
+// 					"SIZE RANGE",
+// 					"SIZE",
+// 					"Size Range ",
+// 				]) || ""
+// 			).trim(),
+// 			images: [],
+// 		};
+// 	});
+// };
+
+// module.exports = {
+// 	parseExcel,
+// 	validateExcelStructure,
+// 	transformExcelToProducts,
+// 	getColumnValue,
+// 	extractColors,
+// 	parsePrice,
+// 	parseSinglePrice,
+// 	isEmptyRow,
+// 	isValidProductRow,
+// };

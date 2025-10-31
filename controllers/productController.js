@@ -15,7 +15,7 @@ const getProducts = async (req, res) => {
 			category,
 			style,
 			page = 1,
-			limit = 20,
+			limit = 10,
 		} = req.query;
 		console.log(req.query);
 

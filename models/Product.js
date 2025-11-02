@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema({
 	availability: {
 		type: String,
 		required: true,
+		default: "yes",
 	},
 	category: {
 		type: String,
@@ -38,6 +39,11 @@ const productSchema = new mongoose.Schema({
 	size: {
 		type: String,
 		required: true,
+	},
+	viewInfront: {
+		type: Boolean,
+		required: true,
+		default: false,
 	},
 	images: [
 		{

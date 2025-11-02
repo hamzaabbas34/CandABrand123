@@ -26,13 +26,23 @@ router.post(
 	upload.fields([{ name: "images", maxCount: 10 }]),
 	async (req, res) => {
 		try {
-			const { brand, year, versionName, category, style, price, size, colors } = req.body;
+			const { brand, year, versionName, category, style, price, size, colors } =
+				req.body;
 
 			// Validate required fields
-			if (!brand || !year || !versionName || !category || !style || !price || !size || !colors) {
+			if (
+				!brand ||
+				!year ||
+				!versionName ||
+				!category ||
+				!style ||
+				!price ||
+				!size ||
+				!colors
+			) {
 				return res.status(400).json({
 					success: false,
-					message: "Missing required fields"
+					message: "Missing required fields",
 				});
 			}
 
@@ -45,15 +55,18 @@ router.post(
 				style,
 				price: Number(price),
 				size,
-				colors: typeof colors === "string" ? colors.split(',').map(c => c.trim()) : colors,
+				colors:
+					typeof colors === "string"
+						? colors.split(",").map((c) => c.trim())
+						: colors,
 				images: [],
-				availability: 'Yes'
+				availability: "Yes",
 			});
 
 			// Handle image upload
 			if (req.files && req.files.images) {
 				const imageFiles = req.files.images;
-				const imagePaths = imageFiles.map(file => file.filename || file.path);
+				const imagePaths = imageFiles.map((file) => file.filename || file.path);
 				newProduct.images = imagePaths;
 			}
 
@@ -62,14 +75,14 @@ router.post(
 			return res.status(201).json({
 				success: true,
 				message: "Product created successfully",
-				data: newProduct
+				data: newProduct,
 			});
 		} catch (error) {
 			console.error("Create product error:", error);
 			return res.status(500).json({
 				success: false,
 				message: "Failed to create product",
-				error: error.message
+				error: error.message,
 			});
 		}
 	}
@@ -112,6 +125,38 @@ router.patch("/:id/availability", async (req, res) => {
 	}
 });
 
+router.patch("/:id/viewInfront", async (req, res) => {
+	
+	try {
+		const { viewInfront } = req.body;
+
+		console.log(viewInfront)
+
+		// Corrected condition: check if it's NOT a boolean
+		if (typeof viewInfront !== "boolean") {
+			return res.status(400).json({
+				message: "Invalid viewInfront value (must be true or false)",
+			});
+		}
+
+		const product = await Product.findByIdAndUpdate(
+			req.params.id,
+			{ viewInfront },
+			{ new: true }
+		).select("viewInfront");
+
+		if (!product) {
+			return res.status(404).json({ message: "Product not found" });
+		}
+
+		res.json({
+			message: "ViewInfront updated successfully",
+			viewInfront: product.viewInfront, // Fixed: should be viewInfront, not availability
+		});
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error });
+	}
+});
 // DELETE product
 router.delete("/:id", deleteProduct);
 

@@ -1,3 +1,4 @@
+const { connect } = require('mongoose');
 const Product = require('../models/Product');
 const Release = require('../models/Release');
 const { deleteVersionDirectory, deleteYearDirectory } = require('../utils/fileUtils');
@@ -23,7 +24,8 @@ const getVersions = async (req, res) => {
         const count = await Product.countDocuments({
           brand: version.brand,
           year: version.year,
-          versionName: version.versionName
+          versionName: version.versionName,
+          category :  version.category
         });
 
         return {
@@ -31,7 +33,11 @@ const getVersions = async (req, res) => {
           productCount: count
         };
       })
+      
     );
+
+    console.log(versionsWithCounts)
+    
 
     return successResponse(res, versionsWithCounts);
 

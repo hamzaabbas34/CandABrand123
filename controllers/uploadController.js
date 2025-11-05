@@ -83,7 +83,7 @@ const validateUpload = async (req, res) => {
 		return successResponse(
 			res,
 			{
-				totalProducts: products.length,
+			
 				validRows: validation.validRows,
 				totalRows: validation.totalRows,
 				invalidRows: validation.invalidRows || [],
@@ -223,7 +223,7 @@ const bulkUpload = async (req, res) => {
 				"No products to upload - all products are missing images",
 				{
 					skippedProducts: skippedProducts,
-					totalProducts: products.length,
+				
 				}
 			);
 		}
@@ -246,7 +246,7 @@ const bulkUpload = async (req, res) => {
 				versionName,
 				category,
 				isPublished: false,
-				totalProduct: products.length || 0,
+			
 			});
 		}
 
@@ -257,7 +257,7 @@ const bulkUpload = async (req, res) => {
 				productsSkipped: skippedProducts.length,
 				imagesUploaded: imageFiles.length,
 				skippedProducts: skippedProducts,
-				totalProducts: products.length,
+			
 				orphanImages: imageMatching.orphanImages,
 			},
 			`Upload successful! ${productsToInsert.length} products uploaded, ${skippedProducts.length} products skipped (missing images)`,

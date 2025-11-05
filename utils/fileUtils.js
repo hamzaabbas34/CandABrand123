@@ -10,55 +10,6 @@ const path = require("path");
  * @param {Array} styles - Array of product style identifiers
  * @returns {Object} - Matching result with assignments, missing, and orphans
  */
-// const matchImagesToStyles = (imageFiles, styles) => {
-// 	const styleImageMap = {};
-// 	const orphanImages = [];
-// 	const missingStyles = new Set(styles);
-
-// 	// Initialize map for each style
-// 	styles.forEach((style) => {
-// 		styleImageMap[style] = [];
-// 	});
-
-// 	// Match images to styles
-// 	imageFiles.forEach((file) => {
-// 		const filename = file.originalname;
-// 		const nameWithoutExt = path.parse(filename).name;
-// 		console.log(filename);
-
-// 		let matched = false;
-
-// 		for (const style of styles) {
-// 			// Create regex patterns for matching
-// 			// Exact match: STYLE
-// 			// With parentheses: STYLE (1), STYLE (2)
-// 			// With underscore: STYLE_1, STYLE_2
-// 			// With dash: STYLE-1, STYLE-2
-// 			const patterns = [
-// 				new RegExp(`^${escapeRegex(style)}$`, "i"),
-// 				new RegExp(`^${escapeRegex(style)}\\s*\\(\\d+\\)$`, "i"),
-// 				new RegExp(`^${escapeRegex(style)}[_-]\\d+$`, "i"),
-// 			];
-
-// 			if (patterns.some((pattern) => pattern.test(nameWithoutExt))) {
-// 				styleImageMap[style].push(file);
-// 				missingStyles.delete(style);
-// 				matched = true;
-// 				break;
-// 			}
-// 		}
-
-// 		if (!matched) {
-// 			orphanImages.push(filename);
-// 		}
-// 	});
-
-// 	return {
-// 		styleImageMap,
-// 		missingStyles: Array.from(missingStyles),
-// 		orphanImages,
-// 	};
-// };
 
 const matchImagesToStyles = (imageFiles, styles) => {
 	const styleImageMap = {};

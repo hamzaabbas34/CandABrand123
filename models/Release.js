@@ -18,10 +18,7 @@ const releaseSchema = new mongoose.Schema({
 		type: String,
 		required: true,
 	},
-	totalProduct: {
-		type: Number,
-		required: true,
-	},
+
 	isPublished: {
 		type: Boolean,
 		default: false,

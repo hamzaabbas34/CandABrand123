@@ -10,6 +10,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const productRoutes = require('./routes/productRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const publishRoutes = require('./routes/publishRoutes');
+const contactUs = require('./routes/contact');
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
 
@@ -29,6 +30,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/versions', versionRoutes);
 app.use('/api/publish', publishRoutes);
+app.use('/api', contactUs);
 
 // Health check
 app.get('/health', (req, res) => {

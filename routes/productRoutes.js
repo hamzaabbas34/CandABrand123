@@ -5,6 +5,8 @@ const {
 	updateProduct,
 	deleteProduct,
 	getProductByBrand,
+	footerApi,
+	navbar,
 } = require("../controllers/productController");
 const upload = require("../middleware/upload");
 const Product = require("../models/Product");
@@ -16,6 +18,10 @@ router.get("/", getProducts);
 
 // GET products by brand
 router.post("/brand", getProductByBrand);
+
+router.post("/footers", footerApi);
+
+router.post("/navbar", navbar);
 
 // GET single product by ID
 router.get("/:id", getProductById);

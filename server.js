@@ -11,13 +11,29 @@ const productRoutes = require('./routes/productRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const publishRoutes = require('./routes/publishRoutes');
 const contactUs = require('./routes/contact');
+
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// Middleware
-app.use(cors("*"));
+// Enhanced CORS Middleware
+app.use(cors({
+    origin: [
+        'http://localhost:5173', 
+        'http://localhost:3000', 
+        'https://backup.azuredress.com',
+        'https://monsinidress.com',
+        'https://www.monsinidress.com'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -32,10 +48,13 @@ app.use('/api/versions', versionRoutes);
 app.use('/api/publish', publishRoutes);
 app.use('/api', contactUs);
 
+// Rest of your code remains the same...
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
+
 
 // Error handler (must be last)
 app.use(errorHandler);

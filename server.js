@@ -20,7 +20,7 @@ const app = express();
 // Enhanced CORS Middleware
 app.use(cors({
     origin: "*",
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));

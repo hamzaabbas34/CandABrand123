@@ -23,8 +23,11 @@ app.use(cors({
         'http://localhost:5173', 
         'http://localhost:3000', 
         'https://backup.azuredress.com',
+        'https://portal.monsiniprom.com',
         'https://monsinidress.com',
-        'https://www.monsinidress.com'
+        'https://www.monsinidress.com',
+
+
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

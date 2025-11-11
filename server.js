@@ -26,8 +26,9 @@ app.use(cors({
         'https://portal.monsiniprom.com',
         'https://monsinidress.com',
         'https://www.monsinidress.com',
-
-
+        'https://monsini.netlify.app/',
+        'https://azuredress.netlify.app/',
+        'https://riskydress1.netlify.app/',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

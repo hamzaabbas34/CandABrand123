@@ -380,7 +380,7 @@ const navbar = async (req, res) => {
 
     publishedReleases.forEach(release => {
       // 1. Get the simplified, standardized category key
-      const simpleCategory = getSimplifiedCategoryKey(release.category);
+      const simpleCategory = release.category
 
       if (!categoryYears[simpleCategory]) {
         categoryYears[simpleCategory] = [];

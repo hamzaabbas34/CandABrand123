@@ -11,6 +11,7 @@ const {
 const upload = require("../middleware/upload");
 const Product = require("../models/Product");
 
+
 const router = express.Router();
 
 // GET all products
@@ -22,6 +23,8 @@ router.post("/brand", getProductByBrand);
 router.post("/footers", footerApi);
 
 router.post("/navbar", navbar);
+
+
 
 // GET single product by ID
 router.get("/:id", getProductById);
@@ -132,11 +135,10 @@ router.patch("/:id/availability", async (req, res) => {
 });
 
 router.patch("/:id/viewInfront", async (req, res) => {
-	
 	try {
 		const { viewInfront } = req.body;
 
-		console.log(viewInfront)
+		console.log(viewInfront);
 
 		// Corrected condition: check if it's NOT a boolean
 		if (typeof viewInfront !== "boolean") {

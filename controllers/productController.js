@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const Release = require("../models/Release");
+const SizeChart = require("../models/SizeChart");
 const { successResponse, errorResponse } = require("../utils/responseUtils");
 const { saveImagesToDisk, deleteImageFromDisk } = require("../utils/fileUtils");
 
@@ -14,7 +15,7 @@ const getProducts = async (req, res) => {
 			page = 1,
 			limit = 10,
 		} = req.query;
-		console.log("request quary",req.query);
+		console.log("request quary", req.query);
 
 		// Build filter
 		const filter = {};
@@ -55,86 +56,88 @@ const getProducts = async (req, res) => {
 };
 
 const getProductByBrand = async (req, res) => {
-  try {
-    const { brand } = req.body;
-    console.log("Brand:", brand);
+	try {
+		const { brand } = req.body;
+		console.log("Brand:", brand);
 
-    if (!brand) {
-      return errorResponse(res, 400, "Brand is required");
-    }
+		if (!brand) {
+			return errorResponse(res, 400, "Brand is required");
+		}
 
-    // Find the published release for the brand
-    const publishedReleases = await Release.find({ brand, isPublished: true });
+		// Find the published release for the brand
+		const publishedReleases = await Release.find({ brand, isPublished: true });
 
-    if (!publishedReleases || publishedReleases.length === 0) {
-      return res.status(200).json({
-        success: false,
-        message: "No published release found",
-        data: {
-          products: [],
-          categories: [],
-          years: []
-        },
-      });
-    }
+		if (!publishedReleases || publishedReleases.length === 0) {
+			return res.status(200).json({
+				success: false,
+				message: "No published release found",
+				data: {
+					products: [],
+					categories: [],
+					years: [],
+				},
+			});
+		}
 
-    console.log("Published releases found:", publishedReleases.length);
+		console.log("Published releases found:", publishedReleases.length);
 
-    // Extract all years, versionNames, and categories from published releases
-    const years = publishedReleases.map(release => release.year);
-    const versionNames = publishedReleases.map(release => release.versionName);
-    const categories = publishedReleases.map(release => release.category);
+		// Extract all years, versionNames, and categories from published releases
+		const years = publishedReleases.map((release) => release.year);
+		const versionNames = publishedReleases.map(
+			(release) => release.versionName
+		);
+		const categories = publishedReleases.map((release) => release.category);
 
-    // Fetch products for ALL published releases
-    const products = await Product.find({
-      brand,
-      year: { $in: years },
-      versionName: { $in: versionNames },
-      category: { $in: categories },
-    });
+		// Fetch products for ALL published releases
+		const products = await Product.find({
+			brand,
+			year: { $in: years },
+			versionName: { $in: versionNames },
+			category: { $in: categories },
+		});
 
-    if (!products || products.length === 0) {
-      return res.status(200).json({
-        success: false,
-        message: "No products available",
-        data: {
-          products: [],
-          categories: [],
-          years: []
-        },
-      });
-    }
+		if (!products || products.length === 0) {
+			return res.status(200).json({
+				success: false,
+				message: "No products available",
+				data: {
+					products: [],
+					categories: [],
+					years: [],
+				},
+			});
+		}
 
-    // 🧠 Fetch all unique categories and years from the actual products
-    const uniqueCategories = await Product.distinct("category", { 
-      brand, 
-      year: { $in: years },
-      versionName: { $in: versionNames }
-    });
-    
-    const uniqueYears = await Product.distinct("year", { 
-      brand, 
-      year: { $in: years },
-      versionName: { $in: versionNames }
-    });
+		// 🧠 Fetch all unique categories and years from the actual products
+		const uniqueCategories = await Product.distinct("category", {
+			brand,
+			year: { $in: years },
+			versionName: { $in: versionNames },
+		});
 
-    console.log("Fetched products:", products.length);
-    console.log("Categories:", uniqueCategories);
-    console.log("Years:", uniqueYears);
+		const uniqueYears = await Product.distinct("year", {
+			brand,
+			year: { $in: years },
+			versionName: { $in: versionNames },
+		});
 
-    return res.status(200).json({
-      success: true,
-      message: "Products fetched successfully",
-      data: {
-        products,
-        categories: uniqueCategories,
-        years: uniqueYears
-      },
-    });
-  } catch (error) {
-    console.error("Get products error:", error);
-    return errorResponse(res, 500, "Failed to fetch products", error.message);
-  }
+		console.log("Fetched products:", products.length);
+		console.log("Categories:", uniqueCategories);
+		console.log("Years:", uniqueYears);
+
+		return res.status(200).json({
+			success: true,
+			message: "Products fetched successfully",
+			data: {
+				products,
+				categories: uniqueCategories,
+				years: uniqueYears,
+			},
+		});
+	} catch (error) {
+		console.error("Get products error:", error);
+		return errorResponse(res, 500, "Failed to fetch products", error.message);
+	}
 };
 
 const getProductById = async (req, res) => {
@@ -265,63 +268,60 @@ const deleteProduct = async (req, res) => {
 	}
 };
 
-
-
 const footerApi = async (req, res) => {
-  try {
-    const { brand } = req.body;
+	try {
+		const { brand } = req.body;
 
-    if (!brand) {
-      return res.status(400).json({
-        success: false,
-        message: "Brand name is required",
-      });
-    }
+		if (!brand) {
+			return res.status(400).json({
+				success: false,
+				message: "Brand name is required",
+			});
+		}
 
-    // Find published releases for that brand
-    const publishedReleases = await Release.find({
-      brand,
-      isPublished: true,
-    });
+		// Find published releases for that brand
+		const publishedReleases = await Release.find({
+			brand,
+			isPublished: true,
+		});
 
-    if (!publishedReleases || publishedReleases.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `No published releases found for brand: ${brand}`,
-      });
-    }
+		if (!publishedReleases || publishedReleases.length === 0) {
+			return res.status(404).json({
+				success: false,
+				message: `No published releases found for brand: ${brand}`,
+			});
+		}
 
-    // Group years by category
-    const categoryYears = {};
+		// Group years by category
+		const categoryYears = {};
 
-    publishedReleases.forEach(release => {
-      if (!categoryYears[release.category]) {
-        categoryYears[release.category] = [];
-      }
-      if (!categoryYears[release.category].includes(release.year)) {
-        categoryYears[release.category].push(release.year);
-      }
-    });
+		publishedReleases.forEach((release) => {
+			if (!categoryYears[release.category]) {
+				categoryYears[release.category] = [];
+			}
+			if (!categoryYears[release.category].includes(release.year)) {
+				categoryYears[release.category].push(release.year);
+			}
+		});
 
-    // Sort years descending for each category
-    Object.keys(categoryYears).forEach(cat => {
-      categoryYears[cat].sort((a, b) => b - a);
-    });
+		// Sort years descending for each category
+		Object.keys(categoryYears).forEach((cat) => {
+			categoryYears[cat].sort((a, b) => b - a);
+		});
 
-    res.status(200).json({
-      success: true,
-      brand,
-      data: categoryYears
-    });
-
-  } catch (error) {
-    console.error("Footer API Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
+		res.status(200).json({
+			success: true,
+			brand,
+			data: categoryYears,
+		});
+	} catch (error) {
+		console.error("Footer API Error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
 };
 /**
  * Helper function to map detailed category names (like 'Prom 2025')
@@ -329,93 +329,182 @@ const footerApi = async (req, res) => {
  * This is crucial for grouping years correctly in the navigation bar.
  */
 const getSimplifiedCategoryKey = (category) => {
-    if (!category || typeof category !== 'string') return 'Other';
-    const lowerCat = category.toLowerCase();
+	if (!category || typeof category !== "string") return "Other";
+	const lowerCat = category.toLowerCase();
 
-    // Standardize 'Prom' categories
-    if (lowerCat.includes('prom')) {
-        return 'Prom';
-    }
-    // Standardize 'Bridal' categories
-    if (lowerCat.includes('bridal') || lowerCat.includes('wedding')) {
-        return 'Bridal';
-    }
-    // Standardize 'Evening' categories
-    if (lowerCat.includes('evening') || lowerCat.includes('cocktail')) {
-        return 'Evening';
-    }
-    // Use the original category as a fallback if no keywords match
-    return category;
+	// Standardize 'Prom' categories
+	if (lowerCat.includes("prom")) {
+		return "Prom";
+	}
+	// Standardize 'Bridal' categories
+	if (lowerCat.includes("bridal") || lowerCat.includes("wedding")) {
+		return "Bridal";
+	}
+	// Standardize 'Evening' categories
+	if (lowerCat.includes("evening") || lowerCat.includes("cocktail")) {
+		return "Evening";
+	}
+	// Use the original category as a fallback if no keywords match
+	return category;
 };
 
+// const navbar = async (req, res) => {
+// 	try {
+// 		// Assuming 'Release' model and Mongoose/MongoDB connection are set up.
+// 		// Replace with your actual database implementation if different.
+// 		const { brand } = req.body;
+
+// 		if (!brand) {
+// 			return res.status(400).json({
+// 				success: false,
+// 				message: "Brand name is required",
+// 			});
+// 		}
+
+// 		// Find published releases for that brand
+// 		const publishedReleases = await Release.find({
+// 			brand,
+// 			isPublished: true,
+// 		});
+
+// 		if (!publishedReleases || publishedReleases.length === 0) {
+// 			return res.status(404).json({
+// 				success: false,
+// 				message: `No published releases found for brand: ${brand}`,
+// 			});
+// 		}
+
+// 		// Group years by simplified category key
+// 		const categoryYears = {};
+
+// 		publishedReleases.forEach((release) => {
+// 			// 1. Get the simplified, standardized category key
+// 			const simpleCategory = getSimplifiedCategoryKey(release.category);
+
+// 			if (!categoryYears[simpleCategory]) {
+// 				categoryYears[simpleCategory] = [];
+// 			}
+// 			// 2. Add the year if it doesn't already exist under the simplified key
+// 			if (!categoryYears[simpleCategory].includes(release.year)) {
+// 				categoryYears[simpleCategory].push(release.year);
+// 			}
+// 		});
+
+// 		// Sort years descending (newest first) for each simplified category
+// 		Object.keys(categoryYears).forEach((cat) => {
+// 			categoryYears[cat].sort((a, b) => b - a);
+// 		});
+
+// 		// The output data structure now groups all related years under one category name
+// 		res.status(200).json({
+// 			success: true,
+// 			brand,
+// 			data: categoryYears,
+// 		});
+// 	} catch (error) {
+// 		console.error("Navbar API Error:", error); // Changed from Footer API Error
+// 		res.status(500).json({
+// 			success: false,
+// 			message: "Internal server error",
+// 			error: error.message,
+// 		});
+// 	}
+// };
 
 const navbar = async (req, res) => {
-  try {
-    // Assuming 'Release' model and Mongoose/MongoDB connection are set up.
-    // Replace with your actual database implementation if different.
-    const { brand } = req.body;
+	try {
+		// --- NOTE: ASSUME THESE MODELS ARE IMPORTED ---
+		// const Release = require("../models/Release");
+		// const SizeChart = require("../models/SizeChart"); // <-- NEW IMPORT
+		// const getSimplifiedCategoryKey = require("./utils"); // <-- ASSUMED UTILITY FUNCTION
 
-    if (!brand) {
-      return res.status(400).json({
-        success: false,
-        message: "Brand name is required",
-      });
-    }
+		const { brand } = req.body;
 
-    // Find published releases for that brand
-    const publishedReleases = await Release.find({
-      brand,
-      isPublished: true,
-    });
+		if (!brand) {
+			return res.status(400).json({
+				success: false,
+				message: "Brand name is required",
+			});
+		}
 
-    if (!publishedReleases || publishedReleases.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `No published releases found for brand: ${brand}`,
-      });
-    }
+		// --- 1. Fetch all published releases for the brand ---
+		const publishedReleases = await Release.find({
+			brand,
+			isPublished: true,
+		});
 
-    // Group years by simplified category key
-    const categoryYears = {};
+		if (!publishedReleases || publishedReleases.length === 0) {
+			return res.status(404).json({
+				success: false,
+				message: `No published releases found for brand: ${brand}`,
+			});
+		}
 
-    publishedReleases.forEach(release => {
-      // 1. Get the simplified, standardized category key
-      const simpleCategory = release.category
+		// Output structure will be:
+		// { simpleCategory: { years: [...], sizeChartImage: 'path/to/img' } }
+		const categoriesData = {};
+		const categoriesToFetch = new Set();
 
-      if (!categoryYears[simpleCategory]) {
-        categoryYears[simpleCategory] = [];
-      }
-      // 2. Add the year if it doesn't already exist under the simplified key
-      if (!categoryYears[simpleCategory].includes(release.year)) {
-        categoryYears[simpleCategory].push(release.year);
-      }
-    });
+		publishedReleases.forEach((release) => {
+			const simpleCategory = getSimplifiedCategoryKey(release.category);
+			categoriesToFetch.add(simpleCategory); // Track unique categories
 
-    // Sort years descending (newest first) for each simplified category
-    Object.keys(categoryYears).forEach(cat => {
-      categoryYears[cat].sort((a, b) => b - a);
-    });
+			if (!categoriesData[simpleCategory]) {
+				categoriesData[simpleCategory] = {
+					years: [],
+					sizeChartImage: null, // Placeholder
+				};
+			}
+			// Add the year if it doesn't already exist
+			if (!categoriesData[simpleCategory].years.includes(release.year)) {
+				categoriesData[simpleCategory].years.push(release.year);
+			}
+		});
 
-    // The output data structure now groups all related years under one category name
-    res.status(200).json({
-      success: true,
-      brand,
-      data: categoryYears
-    });
+		// --- 2. Fetch Size Chart Images based on brand and category ---
 
-  } catch (error) {
-    console.error("Navbar API Error:", error); // Changed from Footer API Error
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
+		// Convert Set to Array for efficient fetching
+		const uniqueCategories = Array.from(categoriesToFetch);
+
+		// Fetch size charts for the brand and all unique simplified categories found
+		// NOTE: This assumes the 'category' field in SizeChart stores the simpleCategory key.
+		const sizeCharts = await SizeChart.find({
+			brand: brand,
+			category: { $in: uniqueCategories },
+		});
+
+		// Map the size chart image paths to the categoriesData structure
+		sizeCharts.forEach((chart) => {
+			const simpleCategory = getSimplifiedCategoryKey(chart.category);
+			if (categoriesData[simpleCategory]) {
+				// Attach the image path to the corresponding category object
+				categoriesData[simpleCategory].sizeChartImage = chart.image;
+			}
+		});
+
+		// --- 3. Final Formatting and Sorting ---
+
+		// Sort years descending (newest first) for each simplified category
+		Object.keys(categoriesData).forEach((cat) => {
+			categoriesData[cat].years.sort((a, b) => b - a);
+		});
+
+		// The final data structure:
+		// { "tshirt": { years: [2024, 2023], sizeChartImage: 'uploads/sizeCharts/img.png' }, ... }
+		res.status(200).json({
+			success: true,
+			brand,
+			data: categoriesData,
+		});
+	} catch (error) {
+		console.error("Navbar API Error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
+	}
 };
-
-
-
-
 
 module.exports = {
 	getProducts,
@@ -424,5 +513,5 @@ module.exports = {
 	updateProduct,
 	deleteProduct,
 	getProductByBrand,
-	navbar
+	navbar,
 };

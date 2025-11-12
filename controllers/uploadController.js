@@ -78,7 +78,7 @@ const validateUpload = async (req, res) => {
 		}));
 
 		// Check if version already exists
-		const existingRelease = await Release.findOne({ brand, year, versionName });
+		
 
 		return successResponse(
 			res,
@@ -91,7 +91,6 @@ const validateUpload = async (req, res) => {
 				orphanImages: imageMatching.orphanImages,
 				warnings: validation.warnings,
 				errors: validation.errors,
-				versionExists: !!existingRelease,
 				productPreview: productPreview.slice(0, 100), // First 100 for preview
 			},
 			"Validation successful"

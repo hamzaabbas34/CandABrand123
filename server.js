@@ -12,6 +12,7 @@ const versionRoutes = require("./routes/versionRoutes");
 const publishRoutes = require("./routes/publishRoutes");
 const contactUs = require("./routes/contact");
 const sizeChart = require("./routes/sizeChart");
+const CarContact = require("./routes/contactCar");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -45,6 +46,7 @@ app.use("/api/versions", versionRoutes);
 app.use("/api/publish", publishRoutes);
 app.use("/api", contactUs);
 app.use("/api/sizeChart", sizeChart);
+app.use("/car", CarContact);
 
 // Rest of your code remains the same...
 

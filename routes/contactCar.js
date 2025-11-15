@@ -85,7 +85,7 @@ router.post("/send-quote-request", async (req, res) => {
 
 		const mailOptions = {
 			from: process.env.EMAIL_USER || "abbasbahi289@gmail.com",
-			to: process.env.EMAIL_TO || "abbasbahi289@gmail.com",
+			to: "Thedallastintshop@gmail.com",
 			subject: `New Quote Request from ${formData.fullName}`,
 			text: createEmailTemplate(formData),
 			html: createEmailHTMLTemplate(formData),

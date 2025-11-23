@@ -18,7 +18,7 @@ const contactMe = async (req, res) => {
     });
 
     // FIX: Provide a default recipient if TO_EMAIL is not set
-    const recipientEmail = process.env.TO_EMAIL || "abbasbahi289@gmail.com";
+    const recipientEmail = "muhammadrizwanyaseen2@gmail.com";
     
     if (!recipientEmail) {
       return res.status(500).json({ error: "Recipient email not configured" });

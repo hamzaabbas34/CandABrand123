@@ -7,10 +7,7 @@ const heroSectionSchema = new mongoose.Schema(
 			required: true,
 			enum: ["Azure", "Monsini", "Risky"],
 		},
-		category: {
-			type: String,
-			required: true,
-		},
+		
 		media: [
 			{
 				url: {

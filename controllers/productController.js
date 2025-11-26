@@ -323,11 +323,6 @@ const footerApi = async (req, res) => {
 		});
 	}
 };
-/**
- * Helper function to map detailed category names (like 'Prom 2025')
- * to simplified, generic keys (like 'Prom', 'Bridal', 'Evening').
- * This is crucial for grouping years correctly in the navigation bar.
- */
 const getSimplifiedCategoryKey = (category) => {
 	if (!category || typeof category !== "string") return "Other";
 	const lowerCat = category.toLowerCase();
@@ -348,76 +343,8 @@ const getSimplifiedCategoryKey = (category) => {
 	return category;
 };
 
-// const navbar = async (req, res) => {
-// 	try {
-// 		// Assuming 'Release' model and Mongoose/MongoDB connection are set up.
-// 		// Replace with your actual database implementation if different.
-// 		const { brand } = req.body;
-
-// 		if (!brand) {
-// 			return res.status(400).json({
-// 				success: false,
-// 				message: "Brand name is required",
-// 			});
-// 		}
-
-// 		// Find published releases for that brand
-// 		const publishedReleases = await Release.find({
-// 			brand,
-// 			isPublished: true,
-// 		});
-
-// 		if (!publishedReleases || publishedReleases.length === 0) {
-// 			return res.status(404).json({
-// 				success: false,
-// 				message: `No published releases found for brand: ${brand}`,
-// 			});
-// 		}
-
-// 		// Group years by simplified category key
-// 		const categoryYears = {};
-
-// 		publishedReleases.forEach((release) => {
-// 			// 1. Get the simplified, standardized category key
-// 			const simpleCategory = getSimplifiedCategoryKey(release.category);
-
-// 			if (!categoryYears[simpleCategory]) {
-// 				categoryYears[simpleCategory] = [];
-// 			}
-// 			// 2. Add the year if it doesn't already exist under the simplified key
-// 			if (!categoryYears[simpleCategory].includes(release.year)) {
-// 				categoryYears[simpleCategory].push(release.year);
-// 			}
-// 		});
-
-// 		// Sort years descending (newest first) for each simplified category
-// 		Object.keys(categoryYears).forEach((cat) => {
-// 			categoryYears[cat].sort((a, b) => b - a);
-// 		});
-
-// 		// The output data structure now groups all related years under one category name
-// 		res.status(200).json({
-// 			success: true,
-// 			brand,
-// 			data: categoryYears,
-// 		});
-// 	} catch (error) {
-// 		console.error("Navbar API Error:", error); // Changed from Footer API Error
-// 		res.status(500).json({
-// 			success: false,
-// 			message: "Internal server error",
-// 			error: error.message,
-// 		});
-// 	}
-// };
-
 const navbar = async (req, res) => {
 	try {
-		// --- NOTE: ASSUME THESE MODELS ARE IMPORTED ---
-		// const Release = require("../models/Release");
-		// const SizeChart = require("../models/SizeChart"); // <-- NEW IMPORT
-		// const getSimplifiedCategoryKey = require("./utils"); // <-- ASSUMED UTILITY FUNCTION
-
 		const { brand } = req.body;
 
 		if (!brand) {
@@ -427,7 +354,7 @@ const navbar = async (req, res) => {
 			});
 		}
 
-		// --- 1. Fetch all published releases for the brand ---
+		// Fetch all published releases for the brand
 		const publishedReleases = await Release.find({
 			brand,
 			isPublished: true,
@@ -440,19 +367,18 @@ const navbar = async (req, res) => {
 			});
 		}
 
-		// Output structure will be:
-		// { simpleCategory: { years: [...], sizeChartImage: 'path/to/img' } }
+		// Structure: { simpleCategory: { years: [...], sizeChartImage: 'path/to/img' } }
 		const categoriesData = {};
 		const categoriesToFetch = new Set();
 
 		publishedReleases.forEach((release) => {
 			const simpleCategory = getSimplifiedCategoryKey(release.category);
-			categoriesToFetch.add(simpleCategory); // Track unique categories
+			categoriesToFetch.add(simpleCategory);
 
 			if (!categoriesData[simpleCategory]) {
 				categoriesData[simpleCategory] = {
 					years: [],
-					sizeChartImage: null, // Placeholder
+					sizeChartImage: null,
 				};
 			}
 			// Add the year if it doesn't already exist
@@ -461,36 +387,26 @@ const navbar = async (req, res) => {
 			}
 		});
 
-		// --- 2. Fetch Size Chart Images based on brand and category ---
-
-		// Convert Set to Array for efficient fetching
+		// Fetch Size Chart Images
 		const uniqueCategories = Array.from(categoriesToFetch);
-
-		// Fetch size charts for the brand and all unique simplified categories found
-		// NOTE: This assumes the 'category' field in SizeChart stores the simpleCategory key.
 		const sizeCharts = await SizeChart.find({
 			brand: brand,
 			category: { $in: uniqueCategories },
 		});
 
-		// Map the size chart image paths to the categoriesData structure
+		// Map size chart images to categories
 		sizeCharts.forEach((chart) => {
 			const simpleCategory = getSimplifiedCategoryKey(chart.category);
 			if (categoriesData[simpleCategory]) {
-				// Attach the image path to the corresponding category object
 				categoriesData[simpleCategory].sizeChartImage = chart.image;
 			}
 		});
 
-		// --- 3. Final Formatting and Sorting ---
-
-		// Sort years descending (newest first) for each simplified category
+		// Sort years descending (newest first) for each category
 		Object.keys(categoriesData).forEach((cat) => {
 			categoriesData[cat].years.sort((a, b) => b - a);
 		});
 
-		// The final data structure:
-		// { "tshirt": { years: [2024, 2023], sizeChartImage: 'uploads/sizeCharts/img.png' }, ... }
 		res.status(200).json({
 			success: true,
 			brand,
@@ -505,6 +421,7 @@ const navbar = async (req, res) => {
 		});
 	}
 };
+
 
 module.exports = {
 	getProducts,

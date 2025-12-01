@@ -192,11 +192,78 @@ router.post("/footers", footerApi);
 router.post("/navbar", navbar);
 
 // ✅ CREATE new product
+// router.post(
+// 	"/",
+// 	upload.fields([{ name: "images", maxCount: 10 }]),
+// 	async (req, res) => {
+// 		// your existing create product code
+// 	}
+// );
+
 router.post(
 	"/",
 	upload.fields([{ name: "images", maxCount: 10 }]),
 	async (req, res) => {
-		// your existing create product code
+		try {
+			const { brand, year, versionName, category, style, price, size, colors } =
+				req.body;
+
+			// Validate required fields
+			if (
+				!brand ||
+				!year ||
+				!versionName ||
+				!category ||
+				!style ||
+				!price ||
+				!size ||
+				!colors
+			) {
+				return res.status(400).json({
+					success: false,
+					message: "Missing required fields",
+				});
+			}
+
+			// Create new product
+			const newProduct = new Product({
+				brand,
+				year: parseInt(year),
+				versionName,
+				category,
+				style,
+				price: Number(price),
+				size,
+				colors:
+					typeof colors === "string"
+						? colors.split(",").map((c) => c.trim())
+						: colors,
+				images: [],
+				availability: "Yes",
+			});
+
+			// Handle image upload
+			if (req.files && req.files.images) {
+				const imageFiles = req.files.images;
+				const imagePaths = imageFiles.map((file) => file.filename || file.path);
+				newProduct.images = imagePaths;
+			}
+
+			await newProduct.save();
+
+			return res.status(201).json({
+				success: true,
+				message: "Product created successfully",
+				data: newProduct,
+			});
+		} catch (error) {
+			console.error("Create product error:", error);
+			return res.status(500).json({
+				success: false,
+				message: "Failed to create product",
+				error: error.message,
+			});
+		}
 	}
 );
 

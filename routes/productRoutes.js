@@ -225,7 +225,6 @@ const {
 	deleteProduct,
 	getProductByBrand,
 	footerApi,
-	navbar,
 	frontView,
 	availability,
 	createProduct,
@@ -238,7 +237,7 @@ const router = express.Router();
 // ✅ FIX 1: Ignore /navbar as an ID
 // This prevents "/navbar" from ever going to getProductById
 // ---------------------------------------------
-router.all("/navbar", (req, res, next) => next()); // reserve route
+
 
 // ---------------------------------------------
 // ✅ SPECIFIC ROUTES FIRST
@@ -246,8 +245,6 @@ router.all("/navbar", (req, res, next) => next()); // reserve route
 router.get("/", getProducts);
 router.post("/brand", getProductByBrand);
 router.post("/footers", footerApi);
-router.post("/navbar", navbar); // navbar route (POST)
-
 // ---------------------------------------------
 // ✅ CREATE product
 // ---------------------------------------------

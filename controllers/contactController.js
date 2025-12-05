@@ -1,97 +1,13 @@
-// const nodemailer = require('nodemailer');
-// require('dotenv').config();
-
-// // 📩 Contact Me Controller
-// const contactMe = async (req, res) => {
-//   const { name, email, message ,brandName } = req.body;
-//   if (!name || !email || !message  || !brandName) {
-//     return res.status(400).json({ error: "Please fill in all fields" });
-//   }
-
-//   try {
-//     const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: "abbasbahi289@gmail.com",
-//         pass:  "fgcx thxe pyju xadd",
-//       },
-//     });
-
-//     // FIX: Provide a default recipient if TO_EMAIL is not set
-//     const recipientEmail = "muhammadrizwanyaseen2@gmail.com";
-
-//     if (!recipientEmail) {
-//       return res.status(500).json({ error: "Recipient email not configured" });
-//     }
-
-//     await transporter.sendMail(mailOptions);
-//     res.status(200).json({ success: true, message: "Message sent successfully!" });
-//   } catch (error) {
-//     console.error("Contact form error:", error);
-//     res.status(500).json({ error: "Failed to send message: " + error.message });
-//   }
-// };
-
-// // 🆕 New Subscriber Controller
-// const newSubscriber = async (req, res) => {
-//   const { brandName, email } = req.body;
-
-//   if (!brandName || !email) {
-//     return res.status(400).json({ error: "Please provide brand name and email" });
-//   }
-
-//   console.log(req.body)
-//   try {
-//     const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: process.env.ADMIN_EMAIL || "abbasbahi289@gmail.com",
-//         pass: process.env.ADMIN_PASS || "fgcx thxe pyju xadd",
-//       },
-//     });
-
-//     // FIX: Provide a default recipient if TO_EMAIL is not set
-//     const recipientEmail = "muhammadrizwanyaseen2@gmail.com";
-
-//     if (!recipientEmail) {
-//       return res.status(500).json({ error: "Recipient email not configured" });
-//     }
-
-//     const mailOptions = {
-//       from: process.env.ADMIN_EMAIL || "abbasbahi289@gmail.com",
-//       to: recipientEmail, // ✅ Now this will always have a value
-//       subject: `🆕 New Subscriber: ${brandName}`,
-//       text: `
-//         A new subscriber has joined your mailing list!
-//         ----------------------------------------------
-//         Brand Name: ${brandName}
-//         Email: ${email}
-//       `,
-//     };
-
-//     await transporter.sendMail(mailOptions);
-//     res.status(200).json({ success: true, message: "Subscription email sent to admin" });
-//   } catch (error) {
-//     console.error("Subscription error:", error);
-//     res.status(500).json({ error: "Failed to send subscription message: " + error.message });
-//   }
-// };
-
-// module.exports = {
-//   contactMe,
-//   newSubscriber
-// };
 
 const nodemailer = require("nodemailer");
 require("dotenv").config(); // Loads environment variables from .env file
-
 const contactMe = async (req, res) => {
-	const { name, email, message, brandName } = req.body;
+	const { name, email, message, brandName, phone } = req.body;
 
 	// -----------------------------------------
 	// FIELD VALIDATION
 	// -----------------------------------------
-	if (!name || !email || !message || !brandName) {
+	if (!name || !email || !message || !brandName | !phone) {
 		return res.status(400).json({ error: "Please fill in all fields" });
 	}
 
@@ -246,6 +162,7 @@ const contactMe = async (req, res) => {
             <div class="info-box">
                 <p><span class="label">Name:</span> ${name}</p>
                 <p><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></p>
+				<p><span class="label">Phone Number:</span> ${phone}</p>
                 <p><span class="label">Brand:</span> ${brandName}</p>
                 <p><span class="label">Date:</span> ${new Date().toLocaleString()}</p>
             </div>
@@ -276,6 +193,7 @@ New Contact Form Submission
 
 Name: ${name}
 Email: ${email}
+Phone Number: ${phone}
 Brand: ${brandName}
 Message:
 ${message}
@@ -300,7 +218,6 @@ Sent automatically from ${brandName}
 		});
 	}
 };
-
 const newSubscriber = async (req, res) => {
 	const { brandName, email } = req.body;
 
@@ -310,7 +227,6 @@ const newSubscriber = async (req, res) => {
 			.json({ error: "Please provide brand name and email" });
 	}
 
-    
 	const EMAIL_ACCOUNTS = {
 		risky: {
 			user: process.env.RISKY_USER,

@@ -11,7 +11,6 @@
 // const upload = require("../middleware/upload");
 // const Product = require("../models/Product");
 
-
 // const router = express.Router();
 
 // // GET all products
@@ -23,8 +22,6 @@
 // router.post("/footers", footerApi);
 
 // router.post("/navbar", navbar);
-
-
 
 // // GET single product by ID
 // router.get("/:id", getProductById);
@@ -170,6 +167,56 @@
 
 // module.exports = router;
 
+// const express = require("express");
+// const {
+// 	getProducts,
+// 	getProductById,
+// 	updateProduct,
+// 	deleteProduct,
+// 	getProductByBrand,
+// 	footerApi,
+// 	navbar,
+// 	frontView,
+// 	availability,
+// 	createProduct
+// } = require("../controllers/productController");
+// const upload = require("../middleware/upload");
+// const Product = require("../models/Product");
+
+// const router = express.Router();
+
+// // ✅ SPECIFIC ROUTES FIRST
+// router.get("/", getProducts);
+// router.post("/brand", getProductByBrand);
+// router.post("/footers", footerApi);
+// router.post("/navbar", navbar);
+
+// router.post(
+// 	"/",
+// 	upload.fields([{ name: "images", maxCount: 10 }]),
+// 	createProduct
+// );
+
+// // ✅ UPDATE product availability only
+// router.patch("/:id/availability", availability);
+
+// router.patch("/:id/viewInfront", frontView);
+
+// // ✅ UPDATE product with images
+// router.patch(
+// 	"/:id",
+// 	upload.fields([{ name: "images", maxCount: 10 }]),
+// 	updateProduct
+// );
+
+// // ✅ DELETE product
+// router.delete("/:id", deleteProduct);
+
+// // ✅ GET single product by ID - THIS SHOULD BE LAST
+// router.get("/:id", getProductById);
+
+// module.exports = router;
+
 const express = require("express");
 const {
 	getProducts,
@@ -179,167 +226,64 @@ const {
 	getProductByBrand,
 	footerApi,
 	navbar,
+	frontView,
+	availability,
+	createProduct,
 } = require("../controllers/productController");
-const upload = require("../middleware/upload");
-const Product = require("../models/Product");
 
+const upload = require("../middleware/upload");
 const router = express.Router();
 
+// ---------------------------------------------
+// ✅ FIX 1: Ignore /navbar as an ID
+// This prevents "/navbar" from ever going to getProductById
+// ---------------------------------------------
+router.all("/navbar", (req, res, next) => next()); // reserve route
+
+// ---------------------------------------------
 // ✅ SPECIFIC ROUTES FIRST
+// ---------------------------------------------
 router.get("/", getProducts);
 router.post("/brand", getProductByBrand);
 router.post("/footers", footerApi);
-router.post("/navbar", navbar);
+router.post("/navbar", navbar); // navbar route (POST)
 
-// ✅ CREATE new product
-// router.post(
-// 	"/",
-// 	upload.fields([{ name: "images", maxCount: 10 }]),
-// 	async (req, res) => {
-// 		// your existing create product code
-// 	}
-// );
-
+// ---------------------------------------------
+// ✅ CREATE product
+// ---------------------------------------------
 router.post(
 	"/",
 	upload.fields([{ name: "images", maxCount: 10 }]),
-	async (req, res) => {
-		try {
-			const { brand, year, versionName, category, style, price, size, colors } =
-				req.body;
-
-			// Validate required fields
-			if (
-				!brand ||
-				!year ||
-				!versionName ||
-				!category ||
-				!style ||
-				!price ||
-				!size ||
-				!colors
-			) {
-				return res.status(400).json({
-					success: false,
-					message: "Missing required fields",
-				});
-			}
-
-			// Create new product
-			const newProduct = new Product({
-				brand,
-				year: parseInt(year),
-				versionName,
-				category,
-				style,
-				price: Number(price),
-				size,
-				colors:
-					typeof colors === "string"
-						? colors.split(",").map((c) => c.trim())
-						: colors,
-				images: [],
-				availability: "Yes",
-			});
-
-			// Handle image upload
-			if (req.files && req.files.images) {
-				const imageFiles = req.files.images;
-				const imagePaths = imageFiles.map((file) => file.filename || file.path);
-				newProduct.images = imagePaths;
-			}
-
-			await newProduct.save();
-
-			return res.status(201).json({
-				success: true,
-				message: "Product created successfully",
-				data: newProduct,
-			});
-		} catch (error) {
-			console.error("Create product error:", error);
-			return res.status(500).json({
-				success: false,
-				message: "Failed to create product",
-				error: error.message,
-			});
-		}
-	}
+	createProduct
 );
 
-// ✅ UPDATE product availability only
-router.patch("/:id/availability", async (req, res) => {
-	try {
-		const { availability } = req.body;
+// ---------------------------------------------
+// ✅ UPDATE availability
+// ---------------------------------------------
+router.patch("/:id/availability", availability);
 
-		if (typeof availability !== "boolean") {
-			return res.status(400).json({
-				message: "Invalid availability value (must be true or false)",
-			});
-		}
+// ---------------------------------------------
+// ✅ UPDATE viewInfront
+// ---------------------------------------------
+router.patch("/:id/viewInfront", frontView);
 
-		const product = await Product.findByIdAndUpdate(
-			req.params.id,
-			{ availability },
-			{ new: true }
-		).select("availability");
-
-		if (!product) {
-			return res.status(404).json({ message: "Product not found" });
-		}
-
-		res.json({
-			message: "Availability updated successfully",
-			availability: product.availability,
-		});
-	} catch (error) {
-		res.status(500).json({ message: "Server error", error });
-	}
-});
-
-router.patch("/:id/viewInfront", async (req, res) => {
-	try {
-		const { viewInfront } = req.body;
-
-		console.log(viewInfront);
-
-		// Corrected condition: check if it's NOT a boolean
-		if (typeof viewInfront !== "boolean") {
-			return res.status(400).json({
-				message: "Invalid viewInfront value (must be true or false)",
-			});
-		}
-
-		const product = await Product.findByIdAndUpdate(
-			req.params.id,
-			{ viewInfront },
-			{ new: true }
-		).select("viewInfront");
-
-		if (!product) {
-			return res.status(404).json({ message: "Product not found" });
-		}
-
-		res.json({
-			message: "ViewInfront updated successfully",
-			viewInfront: product.viewInfront, // Fixed: should be viewInfront, not availability
-		});
-	} catch (error) {
-		res.status(500).json({ message: "Server error", error });
-	}
-});
-
+// ---------------------------------------------
 // ✅ UPDATE product with images
+// ---------------------------------------------
 router.patch(
 	"/:id",
 	upload.fields([{ name: "images", maxCount: 10 }]),
 	updateProduct
 );
 
+// ---------------------------------------------
 // ✅ DELETE product
+// ---------------------------------------------
 router.delete("/:id", deleteProduct);
 
-// ✅ GET single product by ID - THIS SHOULD BE LAST
+// ---------------------------------------------
+// ❗ LAST ROUTE — GET product by ID
+// ---------------------------------------------
 router.get("/:id", getProductById);
 
 module.exports = router;
